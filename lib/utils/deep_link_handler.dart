@@ -1,10 +1,6 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:reown_appkit/modal/i_appkit_modal_impl.dart';
-import 'package:reown_appkit/reown_appkit.dart';
 
 class DeepLinkHandler {
   static const _methodChannel = MethodChannel('com.peopleapp.android/methods');
