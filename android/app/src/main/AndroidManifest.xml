@@ -63,10 +63,10 @@
         android:name="${applicationName}"
         android:icon="${appIcon}">
         <activity
-            android:name="com.example.nayan.MainActivity"
+            android:name="com.peopleapp.android.MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
-            android:taskAffinity="com.example.nayan.activity"
+            android:taskAffinity="com.peopleapp.android.activity"
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"

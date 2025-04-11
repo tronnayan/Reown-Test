@@ -1,4 +1,4 @@
-package com.example.nayan
+package com.peopleapp.android
 
 import io.flutter.embedding.android.FlutterActivity
 import android.content.BroadcastReceiver
@@ -14,8 +14,8 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity: FlutterActivity() {
-    private val eventsChannel = "com.example.nayan/events"
-    private val methodsChannel = "com.example.nayan/methods"
+    private val eventsChannel = "com.peopleapp.android/events"
+    private val methodsChannel = "com.peopleapp.android/methods"
 
     private var initialLink: String? = null
     private var linksReceiver: BroadcastReceiver? = null

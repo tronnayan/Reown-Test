@@ -5,8 +5,8 @@ import CoinbaseWalletSDK
 @main
 @objc class AppDelegate: FlutterAppDelegate {
     
-    private static let EVENTS_CHANNEL = "com.example.nayan/events"
-    private static let METHODS_CHANNEL = "com.example.nayan/methods"
+    private static let EVENTS_CHANNEL = "com.peopleapp.ios/events"
+    private static let METHODS_CHANNEL = "com.peopleapp.ios/methods"
     
     private var eventsChannel: FlutterEventChannel?
     private var methodsChannel: FlutterMethodChannel?
