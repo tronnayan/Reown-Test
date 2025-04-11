@@ -1,4 +1,4 @@
-package com.example.dapp
+package com.example.nayan
 
 import io.flutter.embedding.android.FlutterActivity
 import android.content.BroadcastReceiver
