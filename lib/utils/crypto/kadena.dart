@@ -2,7 +2,7 @@
 
 // import 'package:kadena_dart_sdk/kadena_dart_sdk.dart';
 // import 'package:reown_appkit/reown_appkit.dart';
-// import 'package:reown_appkit_dapp/utils/test_data.dart';
+// import 'package:peopleapp_flutter/utils/test_data.dart';
 
 // enum KadenaMethods {
 //   sign,

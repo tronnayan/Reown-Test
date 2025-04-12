@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:reown_appkit/reown_appkit.dart';
 
-import 'package:reown_appkit_dapp/utils/constants.dart';
+import 'package:peopleapp_flutter/utils/constants.dart';
 
 class PairingItem extends StatelessWidget {
   const PairingItem({

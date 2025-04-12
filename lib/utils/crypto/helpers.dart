@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:eth_sig_util/util/utils.dart';
 import 'package:reown_appkit/reown_appkit.dart';
-import 'package:reown_appkit_dapp/utils/crypto/polkadot.dart';
-import 'package:reown_appkit_dapp/utils/crypto/tron.dart';
-import 'package:reown_appkit_dapp/utils/test_data.dart';
+import 'package:peopleapp_flutter/utils/crypto/polkadot.dart';
+import 'package:peopleapp_flutter/utils/crypto/tron.dart';
+import 'package:peopleapp_flutter/utils/test_data.dart';
 
 import 'package:reown_appkit/solana/solana_web3/solana_web3.dart' as solana;
 import 'package:reown_appkit/solana/solana_web3/programs.dart' as programs;

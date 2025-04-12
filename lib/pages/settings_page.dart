@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:reown_appkit/reown_appkit.dart';
 
-import 'package:reown_appkit_dapp/utils/constants.dart';
+import 'package:peopleapp_flutter/utils/constants.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({

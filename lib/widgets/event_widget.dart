@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:reown_appkit_dapp/utils/constants.dart';
-import 'package:reown_appkit_dapp/utils/string_constants.dart';
+import 'package:peopleapp_flutter/utils/constants.dart';
+import 'package:peopleapp_flutter/utils/string_constants.dart';
 
 class EventWidget extends StatelessWidget {
   const EventWidget({

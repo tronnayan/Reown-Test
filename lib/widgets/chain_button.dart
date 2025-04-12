@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:reown_appkit/reown_appkit.dart';
-import 'package:reown_appkit_dapp/utils/constants.dart';
+import 'package:peopleapp_flutter/utils/constants.dart';
 
 class ChainButton extends StatelessWidget {
   const ChainButton({

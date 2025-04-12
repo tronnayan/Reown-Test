@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:reown_appkit/reown_appkit.dart';
-import 'package:reown_appkit_dapp/utils/constants.dart';
-import 'package:reown_appkit_dapp/utils/crypto/helpers.dart';
-import 'package:reown_appkit_dapp/widgets/method_dialog.dart';
+import 'package:peopleapp_flutter/utils/constants.dart';
+import 'package:peopleapp_flutter/utils/crypto/helpers.dart';
+import 'package:peopleapp_flutter/widgets/method_dialog.dart';
 import 'package:toastification/toastification.dart';
 
 class ConnectPage extends StatefulWidget {

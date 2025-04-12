@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:reown_appkit/reown_appkit.dart';
 
-import 'package:reown_appkit_dapp/utils/constants.dart';
-import 'package:reown_appkit_dapp/utils/string_constants.dart';
-import 'package:reown_appkit_dapp/widgets/pairing_item.dart';
+import 'package:peopleapp_flutter/utils/constants.dart';
+import 'package:peopleapp_flutter/utils/string_constants.dart';
+import 'package:peopleapp_flutter/widgets/pairing_item.dart';
 
 class PairingsPage extends StatefulWidget {
   const PairingsPage({
