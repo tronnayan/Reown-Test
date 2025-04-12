@@ -6,6 +6,7 @@ import 'package:peopleapp_flutter/core/constants/color_constants.dart';
 import 'package:peopleapp_flutter/core/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
 import 'package:reown_appkit/reown_appkit.dart';
+import 'package:reown_appkit/solana/solana_web3/solana_web3.dart' as solana;
 import 'package:toastification/toastification.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -27,6 +28,9 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
   ReownAppKit? _appKit;
   ReownAppKitModal? _appKitModal;
   bool _isLoading = false;
+  String _walletAddress = '';
+  double _walletBalance = 0.0;
+  bool _isWalletConnected = false;
 
   @override
   void initState() {
@@ -144,6 +148,26 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
         isTestNetwork: true,
       ),
     ]);
+    ReownAppKitModalNetworks.addSupportedNetworks('solana', [
+      ReownAppKitModalNetworkInfo(
+        name: 'Solana Mainnet',
+        chainId: 'solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ',
+        chainIcon: 'https://cryptologos.cc/logos/solana-sol-logo.png',
+        currency: 'SOL',
+        rpcUrl: 'https://api.mainnet-beta.solana.com',
+        explorerUrl: 'https://explorer.solana.com',
+      ),
+      ReownAppKitModalNetworkInfo(
+        name: 'Solana Devnet',
+        chainId: 'solana:8E9rvCKLFQia2Y35HXjjpWzj8weVo44K',
+        chainIcon: 'https://cryptologos.cc/logos/solana-sol-logo.png',
+        currency: 'SOL',
+        rpcUrl: 'https://api.devnet.solana.com',
+        explorerUrl: 'https://explorer.solana.com/?cluster=devnet',
+        isTestNetwork: true,
+      ),
+    ]);
+
     if (!linkMode) {
       ReownAppKitModalNetworks.addSupportedNetworks('polkadot', [
         ReownAppKitModalNetworkInfo(
@@ -411,7 +435,72 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
 
   void _onModalConnect(ModalConnect? event) async {
     debugPrint('[CreateToken] _onModalConnect ${event?.session.toJson()}');
+
+    // Get wallet address and balance
+    if (_appKitModal?.session != null && _appKitModal?.selectedChain != null) {
+      final chainId = _appKitModal!.selectedChain!.chainId;
+      final namespace = NamespaceUtils.getNamespaceFromChain(chainId);
+      final address = _appKitModal!.session!.getAddress(namespace);
+
+      setState(() {
+        _walletAddress = address ?? '';
+        _isWalletConnected = true;
+      });
+
+      // Try to get balance if possible
+      try {
+        // Using the proper way to fetch balance based on the chain
+        if (address != null) {
+          await _fetchWalletBalance(address, chainId, namespace);
+        }
+      } catch (e) {
+        debugPrint('[CreateToken] Error getting balance: $e');
+      }
+    }
+
     setState(() {});
+  }
+
+  // Method to fetch wallet balance based on blockchain
+  Future<void> _fetchWalletBalance(String address, String chainId, String namespace) async {
+    try {
+      double balance = 0.0;
+
+      if (namespace == 'solana') {
+        print('chainId: $chainId');
+        print('[CreateToken] Fetching Solana balance for address: $address');
+        // For Solana chains
+        final cluster = solana.Cluster.https(
+          Uri.parse(_appKitModal!.selectedChain!.rpcUrl).authority,
+        );
+        final connection = solana.Connection(cluster);
+
+        // Get the SOL balance
+        final lamports = await connection.getBalance(solana.Pubkey.fromBase58(address));
+        // Convert lamports to SOL (1 SOL = 1,000,000,000 lamports)
+        balance = lamports.toDouble() / 1000000000;
+
+        debugPrint('[CreateToken] Solana balance in lamports: $lamports, in SOL: $balance');
+      } else if (namespace == 'eip155') {
+        // For EVM chains, you could use Web3 to get the balance
+        debugPrint('[CreateToken] EVM chain balance not implemented yet');
+        balance = 0.0; // Placeholder
+      } else {
+        // Default fallback
+        debugPrint('[CreateToken] Balance not implemented for namespace: $namespace');
+        balance = 0.0;
+      }
+
+      setState(() {
+        _walletBalance = balance;
+      });
+    } catch (e) {
+      debugPrint('[CreateToken] Error in _fetchWalletBalance: $e');
+      // Set default value in case of error
+      setState(() {
+        _walletBalance = 0.0;
+      });
+    }
   }
 
   void _onModalUpdate(ModalConnect? event) {
@@ -507,11 +596,53 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Here you would typically make an API call to create the token
-      // For now we'll just simulate success
-      await Future.delayed(const Duration(seconds: 2));
-
-      _showSuccessDialog();
+      // Build and call the Solana transaction
+      if (_appKitModal?.session != null && _appKitModal?.selectedChain != null) {
+        final chainId = _appKitModal!.selectedChain!.chainId;
+        final namespace = NamespaceUtils.getNamespaceFromChain(chainId);
+        print('namespace: $namespace');
+        // Only proceed if we're on a Solana chain
+        if (namespace == 'solana') {
+          final address = _appKitModal!.session!.getAddress(namespace);
+          
+          if (address != null) {
+            // Get transaction parameters for solana_signAndSendTransaction
+            final params = await getParams(
+              'solana_signAndSendTransaction',
+              address,
+              _appKitModal!.selectedChain!,
+            );
+            
+            if (params != null) {
+              // Execute the transaction with all required parameters
+              final sessionTopic = _appKitModal!.session!.topic;
+              
+              final result = await _appKitModal!.request(
+                topic: sessionTopic,
+                chainId: chainId, 
+                request: params,
+              );
+              
+              if (result != null) {
+                debugPrint('[CreateToken] Transaction result: $result');
+                _showSuccessDialog();
+              } else {
+                throw Exception('Transaction failed');
+              }
+            } else {
+              throw Exception('Failed to build transaction parameters');
+            }
+          } else {
+            throw Exception('No wallet address found');
+          }
+        } else {
+          // For demonstration purposes, we'll still show success for non-Solana chains
+          await Future.delayed(const Duration(seconds: 2));
+          _showSuccessDialog();
+        }
+      } else {
+        throw Exception('Wallet not connected');
+      }
     } catch (e) {
       print('❌ Error in token creation: $e');
       if (mounted) {
@@ -614,6 +745,54 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
                       ),
                     ),
                   ),
+                  
+                  // Display wallet details when connected
+                  if (_isWalletConnected) ...[
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: ColorConstants.secondaryBackground,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Wallet Details',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Network: ${_appKitModal?.selectedChain?.name ?? "Unknown"}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Address: ${_shortenAddress(_walletAddress)}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Balance: ${_walletBalance.toStringAsFixed(4)} ${_appKitModal?.selectedChain?.currency ?? ""}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -729,5 +908,11 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
             ),
           );
         });
+  }
+
+  // Helper function to shorten wallet address for display
+  String _shortenAddress(String address) {
+    if (address.length < 10) return address;
+    return '${address.substring(0, 6)}...${address.substring(address.length - 4)}';
   }
 }
