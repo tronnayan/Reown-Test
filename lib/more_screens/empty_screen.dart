@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
-import '../features/main/screens/base_screen.dart';
+import '../features/main/screens/main_screen.dart';
 
 class NewScreen extends StatefulWidget {
   const NewScreen({super.key});
@@ -20,24 +20,16 @@ class _NewScreenState extends State<NewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseScreen(
-      initialIndex: 0, // Change this based on which tab this screen represents:
-      // 0 = Home/Dashboard
-      // 1 = Explore
-      // 2 = Wallet
-      // 3 = Activity
-      // 4 = More
-      child: Column(
-        children: [
-          // Header section
-          _buildHeader(),
+    return Column(
+      children: [
+        // Header section
+        _buildHeader(),
 
-          // Main content section
-          Expanded(
-            child: _buildMainContent(),
-          ),
-        ],
-      ),
+        // Main content section
+        Expanded(
+          child: _buildMainContent(),
+        ),
+      ],
     );
   }
 

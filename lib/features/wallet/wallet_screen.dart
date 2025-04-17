@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:peopleapp_flutter/features/wallet/provider/wallet_provider.dart';
 import '../auth/models/wallet_models.dart';
 import '../../core/widgets/wallet_widgets.dart';
-import '../main/screens/base_screen.dart';
+import '../main/screens/main_screen.dart';
+import 'package:provider/provider.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({Key? key}) : super(key: key);
@@ -13,37 +15,28 @@ class WalletScreen extends StatefulWidget {
 class _WalletScreenState extends State<WalletScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  double walletBalance = 237.77;
-  double socialNetworth = 325.35;
-  bool isLoading = false;
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadWalletData();
-  }
-
-  Future<void> _loadWalletData() async {
-    setState(() => isLoading = true);
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() => isLoading = false);
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      context.read<WalletProvider>().initializeWallet();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return BaseScreen(
-      initialIndex: 2, // Setting wallet tab as initial
-      child: Column(
+    return Consumer<WalletProvider>(builder: (context, walletProvider, child) {
+      return Column(
         children: [
           WalletBalanceCard(
-            balance: walletBalance,
+            walletProvider: walletProvider,
             onBuyTapped: _showBuyDialog,
             onDepositTapped: _showDepositDialog,
             onWithdrawTapped: _showWithdrawDialog,
           ),
           SocialNetworthCard(
-            amount: socialNetworth,
+            walletProvider: walletProvider,
             percentageChange: 0.11,
           ),
           const SizedBox(height: 20),
@@ -54,8 +47,8 @@ class _WalletScreenState extends State<WalletScreen>
           ),
           const SizedBox(height: 20),
         ],
-      ),
-    );
+      );
+    });
   }
 
   List<Token> _getTokens() {

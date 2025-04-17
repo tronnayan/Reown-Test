@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
-import 'package:peopleapp_flutter/features/home/dashboard_screen.dart';
+import 'package:peopleapp_flutter/features/dashboard/dashboard_screen.dart';
 
 import '../core/routes/app_routes.dart';
 

@@ -72,15 +72,15 @@ android {
             dimension "version"
             applicationIdSuffix ".internal"
             manifestPlaceholders = [
-                    appIcon: "@mipmap/ic_launcher_internal",
-                    applicationLabel: "FL AppKit",
+                    appIcon: "@mipmap/ic_launcher",
+                    applicationLabel: "People App - Debug",
             ]
         }
         production {
             dimension "version"
             manifestPlaceholders = [
                     appIcon: "@mipmap/ic_launcher",
-                    applicationLabel: "FL AppKit",
+                    applicationLabel: "People App",
             ]
         }
     }

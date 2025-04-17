@@ -6,11 +6,13 @@ import 'package:peopleapp_flutter/features/auth/models/auth_response.dart';
 import 'package:peopleapp_flutter/features/auth/models/user_profile.dart';
 import 'package:peopleapp_flutter/core/services/api_service.dart';
 import 'package:peopleapp_flutter/core/services/firebase_auth_service.dart';
+import 'package:peopleapp_flutter/features/auth/providers/reown_provider.dart';
 import 'package:reown_appkit/modal/appkit_modal_impl.dart';
 
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuthService _firebaseAuth = FirebaseAuthService();
   final ApiService _apiService = ApiService();
+  final ReownProvider _reownProvider = ReownProvider();
   late ReownAppKitModal appKitModal;
 
   AuthResponse? _authResponse;
@@ -21,6 +23,8 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _isAuthenticated;
   UserProfile? get userProfile => _userProfile;
   Map<String, dynamic>? get privyAuth => _privyAuth;
+
+  initMethods() {}
 
   Future<void> updateAuthState(AuthResponse authResponse) async {
     _authResponse = authResponse;

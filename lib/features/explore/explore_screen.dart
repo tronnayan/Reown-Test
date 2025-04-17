@@ -4,7 +4,7 @@ import '../../more_screens/token_details_screen.dart';
 import '../../core/routes/app_routes.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
-import '../main/screens/base_screen.dart';
+import '../main/screens/main_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -25,18 +25,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseScreen(
-      initialIndex: 1,
-      child: Column(
-        children: [
-          _buildSearchBar(),
-          _buildCategories(),
-          _buildTableHeader(),
-          Expanded(
-            child: _buildMainContent(),
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        _buildSearchBar(),
+        _buildCategories(),
+        _buildTableHeader(),
+        Expanded(
+          child: _buildMainContent(),
+        ),
+      ],
     );
   }
 

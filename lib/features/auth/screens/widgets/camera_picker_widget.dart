@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
-import 'package:peopleapp_flutter/core/utils/constants.dart';
 
 class CameraPickerWidget extends StatefulWidget {
   const CameraPickerWidget({super.key, required this.onImageSelected});

@@ -9,7 +9,7 @@ import 'package:peopleapp_flutter/more_screens/spin_wheel_screen.dart';
 import 'package:peopleapp_flutter/more_screens/support_screen.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
 import '../../core/routes/app_routes.dart';
-import '../main/screens/base_screen.dart';
+import '../main/screens/main_screen.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -21,28 +21,24 @@ class MoreScreen extends StatefulWidget {
 class _MoreScreenState extends State<MoreScreen> {
   @override
   Widget build(BuildContext context) {
-    return BaseScreen(
-      initialIndex: 4,
-      hideHeader: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 24, top: 12, bottom: 12),
-            child: Text(
-              'More',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(left: 24, top: 12, bottom: 12),
+          child: Text(
+            'More',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          Expanded(
-            child: _buildMainContent(),
-          ),
-        ],
-      ),
+        ),
+        Expanded(
+          child: _buildMainContent(),
+        ),
+      ],
     );
   }
 

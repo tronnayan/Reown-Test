@@ -5,7 +5,8 @@ import 'package:peopleapp_flutter/features/auth/screens/login_screen.dart';
 import 'package:peopleapp_flutter/features/auth/screens/sign_up_screen.dart';
 import 'package:peopleapp_flutter/features/auth/screens/splash_screen.dart';
 import 'package:peopleapp_flutter/features/auth/screens/welcome_screen.dart';
-import '../../features/home/dashboard_screen.dart';
+import 'package:peopleapp_flutter/features/main/screens/main_screen.dart';
+import '../../features/dashboard/dashboard_screen.dart';
 import 'package:peopleapp_flutter/core/routes/app_path_constants.dart';
 
 class AppRoutes {
@@ -35,6 +36,10 @@ class AppRoutes {
       GoRoute(
         path: RouteConstants.dashboardScreen,
         builder: (context, state) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: RouteConstants.mainScreen,
+        builder: (context, state) => MainScreen(),
       ),
     ],
   );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
-import 'package:peopleapp_flutter/core/utils/constants.dart';
 
 class DOBPicker extends StatelessWidget {
   final DateTime? selectedDate;

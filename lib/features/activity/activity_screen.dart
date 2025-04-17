@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
-import '../main/screens/base_screen.dart';
+import '../main/screens/main_screen.dart';
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
@@ -15,17 +15,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseScreen(
-      initialIndex: 3,
-      hideHeader: true,
-      child: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: _buildMainContent(),
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        _buildHeader(),
+        Expanded(
+          child: _buildMainContent(),
+        ),
+      ],
     );
   }
 

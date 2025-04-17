@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
+import 'package:peopleapp_flutter/features/wallet/provider/wallet_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../features/auth/models/wallet_models.dart';
 
@@ -48,14 +49,14 @@ class _CustomPainter extends BoxPainter {
 }
 
 class WalletBalanceCard extends StatelessWidget {
-  final double balance;
+  final WalletProvider walletProvider;
   final VoidCallback onBuyTapped;
   final VoidCallback onDepositTapped;
   final VoidCallback onWithdrawTapped;
 
   const WalletBalanceCard({
     Key? key,
-    required this.balance,
+    required this.walletProvider,
     required this.onBuyTapped,
     required this.onDepositTapped,
     required this.onWithdrawTapped,
@@ -86,13 +87,27 @@ class WalletBalanceCard extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Text(
-                    balance.toStringAsFixed(2),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        walletProvider.balance.toStringAsFixed(2),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        walletProvider.currency,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                   ),
                   const SizedBox(width: 8),
                   Image.asset(
@@ -263,12 +278,12 @@ class _ActionButton extends StatelessWidget {
 }
 
 class SocialNetworthCard extends StatelessWidget {
-  final double amount;
+  final WalletProvider walletProvider;
   final double percentageChange;
 
   const SocialNetworthCard({
     Key? key,
-    required this.amount,
+    required this.walletProvider,
     required this.percentageChange,
   }) : super(key: key);
 
@@ -307,7 +322,7 @@ class SocialNetworthCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '\$${amount.toStringAsFixed(2)}',
+                  '\$${00.toStringAsFixed(2)}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
