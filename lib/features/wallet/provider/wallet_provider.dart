@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:peopleapp_flutter/features/auth/models/user_wallet_model.dart';
+import 'package:peopleapp_flutter/features/auth/models/db/user_wallet_model.dart';
 import 'package:peopleapp_flutter/features/auth/providers/reown_provider.dart';
-import 'package:peopleapp_flutter/features/auth/service/user_wallet_data_service.dart';
+import 'package:peopleapp_flutter/features/auth/service/wallet_db_service.dart';
 import 'package:reown_appkit/reown_appkit.dart';
 
 class WalletProvider extends ChangeNotifier {

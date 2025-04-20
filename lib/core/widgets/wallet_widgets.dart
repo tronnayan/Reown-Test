@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
 import 'package:peopleapp_flutter/features/wallet/provider/wallet_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import '../../features/auth/models/wallet_models.dart';
+import '../../features/wallet/models/wallet_models.dart';
 
 class CustomTabIndicator extends Decoration {
   final Color color;

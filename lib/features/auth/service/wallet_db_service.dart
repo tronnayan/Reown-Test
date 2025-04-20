@@ -1,5 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import '../models/user_wallet_model.dart';
+import 'package:peopleapp_flutter/features/auth/models/db/user_wallet_model.dart';
 
 class HiveService {
   static const String walletBox = 'wallet_box';

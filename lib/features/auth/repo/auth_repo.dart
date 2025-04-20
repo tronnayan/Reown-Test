@@ -1,23 +1,32 @@
-import 'package:peopleapp_flutter/core/constants/api_routes.dart';
-import 'package:peopleapp_flutter/features/auth/models/login_response.dart';
+import 'dart:convert';
+
+import 'package:peopleapp_flutter/core/exceptions/exceptions_handling.dart';
+import 'package:peopleapp_flutter/features/auth/models/requests/login_request.dart';
+import 'package:peopleapp_flutter/features/auth/models/responses/auth_response.dart';
+import 'package:peopleapp_flutter/features/auth/models/responses/general_response.dart';
+import 'package:peopleapp_flutter/features/auth/models/responses/user_response.dart';
 import 'package:peopleapp_flutter/features/auth/repo/i_auth_repo.dart';
-import 'package:peopleapp_flutter/core/services/api_service.dart';
 import 'package:peopleapp_flutter/core/services/get_it_service.dart';
+import 'package:peopleapp_flutter/network/http_services.dart';
+import 'package:peopleapp_flutter/network/url_constants.dart';
 
 class AuthRepo extends IAuthRepo {
-  final ApiService apiService = getIt<ApiService>();
-  @override
-  Future<LoginResponse> loginEmail({required String email}) async {
-    try {
-      Map<String, dynamic> data = {
-        'email': email,
-      };
-      // final response = await apiService.post(ApiRoutes.login, data: data);
+  final HttpService httpService = getIt<HttpService>();
 
-      if (true) {
-        return LoginResponse.fromJson({'token': '1234567890'});
+  @override
+  Future<AuthResponse> authenticate({required LoginRequest request}) async {
+    try {
+      print('login request: ${request.toJson()}');
+
+      var response = await httpService.postRequest(
+        endpoint: EndPointsConstants.loginUrl,
+        body: request.toJson(),
+      );
+      if (response.statusCode == 200) {
+        print('login response: $response');
+        return AuthResponse.fromJson(jsonDecode(response.body.toString()));
       } else {
-        throw Exception('Failed to login');
+        throw Exception('Login failed ${response.statusCode} ${response.body}');
       }
     } catch (e) {
       throw Exception(e);
@@ -25,45 +34,36 @@ class AuthRepo extends IAuthRepo {
   }
 
   @override
-  Future<LoginResponse> verifyEmail(
-      {required String email, required String otp}) async {
+  Future<ApiResponse> sendOtp({required String email}) async {
     try {
-      Map<String, dynamic> data = {
-        'email': email,
-        'otp': otp,
-      };
-      // final response = await apiService.post(ApiRoutes.verifyEmail, data: data);
-
-      if (true) {
-        return LoginResponse.fromJson({'token': '1234567890'});
+      var response = await httpService.postRequest(
+        endpoint: EndPointsConstants.sendOtpUrl,
+        body: {'email': email},
+      );
+      if (response.statusCode == 200) {
+        return ApiResponse.fromJson(jsonDecode(response.body.toString()));
       } else {
-        throw Exception('Failed to verify email');
+        throw ExceptionHandler.handle(response.body);
       }
     } catch (e) {
-      throw Exception(e);
+      throw ExceptionHandler.handle(e);
     }
   }
 
   @override
-  Future<LoginResponse> signUp(
-      {required String email,
-      required String name,
-      required String dob}) async {
+  Future<UserResponse> getUserDetails({required String accessToken}) async {
     try {
-      Map<String, dynamic> data = {
-        'email': email,
-        'name': name,
-        'dob': dob,
-      };
-      // final response = await apiService.post(ApiRoutes.signUp, data: data);
-
-      if (true) {
-        return LoginResponse.fromJson({'token': '1234567890'});
+      var response = await httpService.getRequestWithToken(
+        endpoint: EndPointsConstants.getUserDetailsUrl,
+        token: accessToken,
+      );
+      if (response.statusCode == 200) {
+        return UserResponse.fromJson(jsonDecode(response.body.toString()));
       } else {
-        throw Exception('Failed to sign up');
+        throw ExceptionHandler.handle(response.body);
       }
     } catch (e) {
-      throw Exception(e);
+      throw ExceptionHandler.handle(e);
     }
   }
 }

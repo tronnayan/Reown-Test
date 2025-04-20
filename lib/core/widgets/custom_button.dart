@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
 import 'package:peopleapp_flutter/core/constants/image_constants.dart';
-import 'package:peopleapp_flutter/core/services/tap_gesture_service.dart';
+import 'package:peopleapp_flutter/core/widgets/on_tap.dart';
 
 class PrimaryButton extends StatefulWidget {
   final String text;

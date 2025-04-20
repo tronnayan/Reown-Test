@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
-import 'package:provider/provider.dart';
-import 'package:peopleapp_flutter/features/auth/providers/auth_provider.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -19,9 +17,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProfile =
-        Provider.of<AuthProvider>(context, listen: false).userProfile;
-
     return AppBar(
       backgroundColor: ColorConstants.darkBackground,
       elevation: 0,
@@ -33,7 +28,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : null,
       title: Text(
-        'Welcome, ${userProfile?.fullName ?? 'User'}',
+        'Welcome User',
         style: const TextStyle(
           color: Colors.white,
           fontSize: 18,

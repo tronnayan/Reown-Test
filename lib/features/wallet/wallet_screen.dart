@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:peopleapp_flutter/features/wallet/models/wallet_models.dart';
 import 'package:peopleapp_flutter/features/wallet/provider/wallet_provider.dart';
-import '../auth/models/wallet_models.dart';
 import '../../core/widgets/wallet_widgets.dart';
 import '../main/screens/main_screen.dart';
 import 'package:provider/provider.dart';

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
 import 'package:peopleapp_flutter/core/constants/image_constants.dart';
 import 'package:peopleapp_flutter/core/services/get_it_service.dart';
-import 'package:peopleapp_flutter/features/auth/providers/auth_provider.dart';
+import 'package:peopleapp_flutter/features/auth/providers/authentication_provider.dart';
 import 'package:peopleapp_flutter/core/routes/app_path_constants.dart';
 import 'package:peopleapp_flutter/core/routes/app_routes.dart';
+import 'package:peopleapp_flutter/features/auth/providers/authentication_provider.dart';
 import 'package:peopleapp_flutter/features/auth/providers/reown_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -18,7 +19,8 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> with WidgetsBindingObserver {
-  late final AuthProvider authProvider = getIt<AuthProvider>();
+  late final AuthenticationProvider authProvider =
+      getIt<AuthenticationProvider>();
 
   @override
   void initState() {
@@ -28,33 +30,27 @@ class _SplashPageState extends State<SplashPage> with WidgetsBindingObserver {
 
   Future<void> _initialize() async {
     try {
-      // await reownProvider.initializeService(context);
-
-      // After initialization, proceed with auth check
-      final authProvider = getIt<AuthProvider>();
-      final value = await authProvider.checkAuthStatus();
+      final authProvider = getIt<AuthenticationProvider>();
+      final bool value = await authProvider.checkAuthStatus();
 
       if (mounted) {
-        if (value != null) {
-          NavigationService.navigateOffAll(
-            context,
-            !value.accountCreated
-                ? RouteConstants.welcomeScreen
-                : RouteConstants.createTokenScreen,
-          );
-        } else {
+        if (value) {
           NavigationService.navigateOffAll(
             context,
             RouteConstants.createTokenScreen,
           );
+        } else {
+          NavigationService.navigateOffAll(
+            context,
+            RouteConstants.welcomeScreen,
+          );
         }
       }
     } catch (e) {
-      print('Error in SplashPage initialization: $e');
       if (mounted) {
         NavigationService.navigateOffAll(
           context,
-          RouteConstants.createTokenScreen,
+          RouteConstants.welcomeScreen,
         );
       }
     }

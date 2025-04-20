@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:peopleapp_flutter/features/auth/models/user_wallet_model.dart';
-import 'package:peopleapp_flutter/features/auth/service/user_wallet_data_service.dart';
+import 'package:peopleapp_flutter/features/auth/models/db/user_wallet_model.dart';
+import 'package:peopleapp_flutter/features/auth/service/wallet_db_service.dart';
 
 class DashboardProvider extends ChangeNotifier {
   WalletData? _walletData;

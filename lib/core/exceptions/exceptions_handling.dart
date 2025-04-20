@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:peopleapp_flutter/core/exceptions/exceptions.dart';
-import 'package:peopleapp_flutter/core/services/toast_service.dart';
+import 'package:peopleapp_flutter/core/widgets/toast_widget.dart';
 
 class ExceptionHandler {
   static handle(dynamic error) {

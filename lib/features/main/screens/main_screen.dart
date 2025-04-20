@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
 import 'package:peopleapp_flutter/features/activity/activity_screen.dart';
-import 'package:peopleapp_flutter/features/auth/providers/auth_provider.dart';
 import 'package:peopleapp_flutter/features/dashboard/dashboard_screen.dart';
 import 'package:peopleapp_flutter/features/main/provider/main_provider.dart';
 import 'package:peopleapp_flutter/features/more/more_screen.dart';

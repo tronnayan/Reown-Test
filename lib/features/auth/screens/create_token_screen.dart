@@ -9,7 +9,6 @@ import 'package:peopleapp_flutter/core/constants/color_constants.dart';
 import 'package:peopleapp_flutter/core/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
 import 'package:reown_appkit/reown_appkit.dart';
-import '../providers/auth_provider.dart';
 
 class CreateTokenScreen extends StatefulWidget {
   const CreateTokenScreen({super.key});
@@ -35,8 +34,6 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userProfile =
-        Provider.of<AuthProvider>(context, listen: false).userProfile;
     return Consumer<ReownProvider>(builder: (context, provider, child) {
       // WidgetsBinding.instance.addPostFrameCallback((_) async {
       //   if (provider.isLoading && !provider.isWalletConnected) {

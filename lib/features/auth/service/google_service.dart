@@ -1,12 +1,44 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
-class FirebaseAuthService {
+class GoogleAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  // Twitter API Keys from Firebase Console
   static const String apiKey = 'qdaKneXPnt4SZxYHrGNFFWPGz';
-  static const String apiSecretKey = 'V4320CYtgV0jv8MLP9vIKrKqEbKm7bSgI8mjJLlg7cIcuCMkp5';
+  static const String apiSecretKey =
+      'V4320CYtgV0jv8MLP9vIKrKqEbKm7bSgI8mjJLlg7cIcuCMkp5';
   static const String redirectURI = 'peopleapp://';
+
+  Future<User?> signInWithGoogle() async {
+    try {
+      final googleUser = await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        print('Google user is null');
+        return null;
+      }
+
+      final googleAuth = await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await _auth.signInWithCredential(credential);
+
+      return userCredential.user;
+    } catch (e) {
+      print("Sign-in error: $e");
+      return null;
+    }
+  }
+
+  Future<void> signOut() async {
+    await _googleSignIn.signOut();
+    await _auth.signOut();
+  }
 
   // Future<UserCredential?> signInWithTwitter() async {
   //   try {
@@ -45,12 +77,4 @@ class FirebaseAuthService {
   //     rethrow;
   //   }
   // }
-
-  Future<void> signOut() async {
-    await _auth.signOut();
-  }
-
-  User? get currentUser => _auth.currentUser;
-
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
-} 
+}

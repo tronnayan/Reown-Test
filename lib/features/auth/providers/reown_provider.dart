@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:peopleapp_flutter/features/auth/models/user_wallet_model.dart';
-import 'package:peopleapp_flutter/features/auth/service/user_wallet_data_service.dart';
+import 'package:peopleapp_flutter/features/auth/models/db/user_wallet_model.dart';
+import 'package:peopleapp_flutter/features/auth/service/wallet_db_service.dart';
 import 'package:peopleapp_flutter/features/main/screens/main_screen.dart';
 import 'package:reown_appkit/reown_appkit.dart';
 import 'package:reown_appkit/solana/solana_web3/solana_web3.dart' as solana;

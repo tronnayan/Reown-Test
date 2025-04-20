@@ -17,8 +17,9 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColorConstants.darkBackground,
+      resizeToAvoidBottomInset: false,
       body: Padding(
-        padding: const EdgeInsets.all(.0),
+        padding: const EdgeInsets.all(24.0),
         child: Consumer<AuthenticationProvider>(
             builder: (context, authProvider, child) {
           return Stack(
@@ -27,73 +28,17 @@ class LoginScreen extends StatelessWidget {
               //   ImageConstants.logoCoinBg,
               //   height: 400,
               // ),
-              Padding(
-                padding: const EdgeInsets.all(24.0),
+              Align(
+                alignment: Alignment.bottomCenter,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SizedBox(height: 40),
-                    CustomButton.backButton(context),
-                    const Expanded(
-                      child: SizedBox(),
-                    ),
-                    Image.asset(
-                      ImageConstants.peopleLogo,
-                      width: 200,
-                      height: 100,
-                    ),
-                    const SizedBox(height: 40),
-                    const Text(
-                      'Login ',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 42,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Text(
-                        'Join your community of creators and investors',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    FormFields(
-                      controller: _emailController,
-                      label: 'Email',
-                      hintText: 'Enter your email',
-                      enabled: true,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 24),
-                    TextButton(
-                      onPressed: () => {
-                        NavigationService.navigateTo(
-                            context, RouteConstants.signupScreen)
-                      },
-                      child: const Text(
-                        'Don\'t have an account? Sign up',
-                        style: TextStyle(
-                          color: ColorConstants.primaryPurple,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.underline,
-                          decorationColor: ColorConstants.primaryPurple,
-                        ),
-                      ),
-                    ),
-                    const Expanded(child: SizedBox(height: 0)),
                     PrimaryButton(
                       text: 'Send OTP',
-                      onPressed: () => authProvider.loginEmail(
-                          email: _emailController.text, context: context),
+                      onPressed: () => authProvider.sentOtp(
+                        email: _emailController.text,
+                        context: context,
+                      ),
                       isPrimary: true,
                     ),
                     const SizedBox(height: 24),
@@ -117,9 +62,67 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
                   ],
                 ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 40),
+                  CustomButton.backButton(context),
+                  Image.asset(
+                    ImageConstants.peopleLogo,
+                    width: 200,
+                    height: 100,
+                  ),
+                  const SizedBox(height: 40),
+                  const Text(
+                    'Login ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 42,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      'Join your community of creators and investors',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  FormFields(
+                    controller: _emailController,
+                    label: 'Email',
+                    hintText: 'Enter your email',
+                    enabled: true,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 24),
+                  TextButton(
+                    onPressed: () => {
+                      NavigationService.navigateTo(
+                          context, RouteConstants.signupScreen)
+                    },
+                    child: const Text(
+                      'Don\'t have an account? Sign up',
+                      style: TextStyle(
+                        color: ColorConstants.primaryPurple,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor: ColorConstants.primaryPurple,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           );

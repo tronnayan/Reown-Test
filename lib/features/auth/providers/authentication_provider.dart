@@ -1,15 +1,24 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:peopleapp_flutter/features/auth/repo/auth_repo.dart';
-import 'package:peopleapp_flutter/features/auth/screens/widgets/bottomsheets/auth_bottomseets.dart';
+import 'package:peopleapp_flutter/core/exceptions/exceptions_handling.dart';
 import 'package:peopleapp_flutter/core/routes/app_path_constants.dart';
 import 'package:peopleapp_flutter/core/routes/app_routes.dart';
+import 'package:peopleapp_flutter/features/auth/models/db/user_db_model.dart';
+import 'package:peopleapp_flutter/features/auth/models/requests/login_request.dart';
+import 'package:peopleapp_flutter/features/auth/models/responses/auth_response.dart';
+import 'package:peopleapp_flutter/features/auth/models/responses/general_response.dart';
+import 'package:peopleapp_flutter/features/auth/models/responses/user_response.dart';
+import 'package:peopleapp_flutter/features/auth/repo/auth_repo.dart';
 import 'package:peopleapp_flutter/core/services/get_it_service.dart';
-import 'package:peopleapp_flutter/core/services/toast_service.dart';
+import 'package:peopleapp_flutter/core/widgets/toast_widget.dart';
+import 'package:peopleapp_flutter/features/auth/screens/widgets/bottomsheets/auth_bottomseets.dart';
+import 'package:peopleapp_flutter/features/auth/service/google_service.dart';
+import 'package:peopleapp_flutter/features/auth/service/user_db_service.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthenticationProvider extends ChangeNotifier {
@@ -17,26 +26,26 @@ class AuthenticationProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   final AuthRepo authRepo = getIt<AuthRepo>();
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleAuthService googleAuthService = getIt<GoogleAuthService>();
 
   Future<void> loginWithGoogle({required BuildContext context}) async {
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        return;
+      final User? user = await googleAuthService.signInWithGoogle();
+      if (user != null) {
+        user.getIdToken().then((value) {
+          final resp = authRepo.authenticate(
+            request: LoginRequest(
+              authType: AuthType.GOOGLE_LOGIN,
+              email: user.email!,
+              fullName: user.displayName!,
+              otp: '',
+              authToken: value ?? '',
+            ),
+          );
+        });
       }
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      await _auth.signInWithCredential(credential);
-      notifyListeners();
     } catch (e) {
-      print(e);
+      throw ExceptionHandler.handle(e);
     }
   }
 
@@ -51,17 +60,20 @@ class AuthenticationProvider extends ChangeNotifier {
 
       print('Apple ID Credential: ${appleCredential.toString()}');
     } catch (error) {
-      print('Error during Apple Sign-In: $error');
+      throw ExceptionHandler.handle(error);
     }
   }
 
-  Future<void> loginEmail(
+  Future<void> sentOtp(
       {required String email, required BuildContext context}) async {
     try {
       _setIsLoading(true);
       if (_checkEmail(email)) {
-        final response = await authRepo.loginEmail(email: email);
-        if (response.token.isNotEmpty) {
+        final ApiResponse response = await authRepo.sendOtp(
+          email: email,
+        );
+        print('send otp response: ${response.toString()}');
+        if (response.statusCode == 200) {
           _setIsLoading(false);
           AuthBottomSheets.showOtpBottomSheet(context,
               email: email,
@@ -78,35 +90,23 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> signUp(
-      {required String email,
-      required String name,
-      required String dob,
-      required BuildContext context}) async {
-    try {
-      if (_checkSignUpForm(email: email, name: name, dob: dob)) {
-        _setIsLoading(true);
-        final response =
-            await authRepo.signUp(email: email, name: name, dob: dob);
-        if (response.token.isNotEmpty) {
-          _setIsLoading(false);
-          NavigationService.navigateOffAll(
-              context, RouteConstants.createTokenScreen);
-        }
-      }
-    } catch (e) {
-      _setIsLoading(false);
-      throw Exception(e);
-    }
-  }
-
   Future<void> verifyOtp(
       {required String otp,
       required String email,
       required BuildContext context}) async {
     try {
-      final response = await authRepo.verifyEmail(otp: otp, email: email);
-      if (response.token.isNotEmpty) {
+      final AuthResponse response = await authRepo.authenticate(
+        request: LoginRequest(
+          authType: AuthType.EMAIL_LOGIN,
+          email: email,
+          fullName: '',
+          otp: otp,
+          authToken: '',
+        ),
+      );
+      if (response.statusCode == 200) {
+        await UserDbService.saveUserData(
+            UserDbModel.fromJson(response.data.toJson()));
         NavigationService.navigateOffAll(
             context, RouteConstants.createTokenScreen);
       }
@@ -115,13 +115,54 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> signUp(
+      {required String email,
+      required String name,
+      required String dob,
+      required BuildContext context}) async {
+    try {
+      if (_checkSignUpForm(email: email, name: name, dob: dob)) {
+        _setIsLoading(true);
+        // final response =
+        //     await authRepo.signUp(email: email, name: name, dob: dob);
+        // if (response.token.isNotEmpty) {
+        //   _setIsLoading(false);
+        //   NavigationService.navigateOffAll(
+        //       context, RouteConstants.createTokenScreen);
+        // }
+      }
+    } catch (e) {
+      _setIsLoading(false);
+      throw Exception(e);
+    }
+  }
+
+  Future<UserResponse> getUserDetails() async {
+    try {
+      final user = UserDbService.getUserData();
+      if (user != null) {
+        final UserResponse response = await authRepo.getUserDetails(
+          accessToken: user.accessToken,
+        );
+        if (response.statusCode == 200) {
+          return response;
+        } else {
+          throw ExceptionHandler.handle(response.statusCode);
+        }
+      }
+      throw ExceptionHandler.handle("User not found");
+    } catch (e) {
+      throw ExceptionHandler.handle(e);
+    }
+  }
+
   Future<void> resendOtp(
       {required String email, required BuildContext context}) async {
     _setIsLoading(true);
-    final response = await authRepo.loginEmail(email: email);
-    if (response.token.isNotEmpty) {
-      _setIsLoading(false);
-    } else {}
+    // final response = await authRepo.loginEmail(email: email);
+    // if (response.token.isNotEmpty) {
+    //   _setIsLoading(false);
+    // } else {}
     _setIsLoading(false);
   }
 
@@ -157,6 +198,19 @@ class AuthenticationProvider extends ChangeNotifier {
       } else {
         return true;
       }
+    }
+  }
+
+  Future<bool> checkAuthStatus() async {
+    try {
+      bool isUserLoggedIn = false;
+      final UserResponse response = await getUserDetails();
+      if (response.statusCode == 200) {
+        isUserLoggedIn = true;
+      }
+      return isUserLoggedIn;
+    } catch (e) {
+      return false;
     }
   }
 }

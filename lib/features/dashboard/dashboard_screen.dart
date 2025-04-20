@@ -4,9 +4,6 @@ import 'package:peopleapp_flutter/core/constants/color_constants.dart';
 import 'package:peopleapp_flutter/core/utlites/wallet_formatter.dart';
 import 'package:peopleapp_flutter/features/dashboard/provider/dashboard_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:reown_appkit/reown_appkit.dart';
-import '../auth/providers/auth_provider.dart';
-import '../main/screens/main_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({
@@ -212,9 +209,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildPostCard(
       String name, String handle, String content, String tokens) {
-    final userProfile =
-        Provider.of<AuthProvider>(context, listen: false).userProfile;
-
     return Card(
       color: Colors.black,
       child: Padding(

@@ -1,6 +1,10 @@
+import 'package:peopleapp_flutter/features/auth/models/requests/login_request.dart';
+import 'package:peopleapp_flutter/features/auth/models/responses/auth_response.dart';
+import 'package:peopleapp_flutter/features/auth/models/responses/general_response.dart';
+import 'package:peopleapp_flutter/features/auth/models/responses/user_response.dart';
+
 abstract class IAuthRepo {
-  Future<void> loginEmail({required String email});
-  Future<void> verifyEmail({required String email, required String otp});
-  Future<void> signUp(
-      {required String email, required String name, required String dob});
+  Future<AuthResponse> authenticate({required LoginRequest request});
+  Future<ApiResponse> sendOtp({required String email});
+  Future<UserResponse> getUserDetails({required String accessToken});
 }
