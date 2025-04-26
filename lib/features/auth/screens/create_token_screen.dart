@@ -313,7 +313,7 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
     switch (status) {
       case ConnectionStatus.connected:
         {
-          return 'Connected';
+          return 'Create Token';
         }
       case ConnectionStatus.expired:
         return 'Reconnect Wallet';
