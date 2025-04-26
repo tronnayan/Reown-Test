@@ -211,7 +211,7 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
                   isPrimary: true,
                   onPressed: () async {
                     try {
-                      await provider.connectWallet(context);
+                      provider.connectionStatus == ConnectionStatus.connected ? await provider.createToken(context): await provider.connectWallet(context);
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

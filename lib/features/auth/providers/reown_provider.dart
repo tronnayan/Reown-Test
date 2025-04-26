@@ -604,22 +604,21 @@ class ReownProvider extends ChangeNotifier {
       appKitModal!
           .openModalView(const ReownAppKitModalAllWalletsPage())
           .then((value) {
-        _createToken(context);
+        createToken(context);
       }).onError((error, stackTrace) {
         setIsLoading(false);
         print('❌ Error in connectWallet: $error');
       });
     } else {
-      _createToken(context);
+      createToken(context);
     }
   }
 
-  Future<void> _createToken(BuildContext context) async {
+  Future<void> createToken(BuildContext context) async {
     try {
       final chainId = appKitModal!.selectedChain!.chainId;
       final namespace = NamespaceUtils.getNamespaceFromChain(chainId);
       print('reownProvider entered name: $namespace');
-
       if (appKitModal?.session != null && appKitModal?.selectedChain != null) {
         final walletData = WalletData(
           walletAddress: walletAddress,
@@ -638,51 +637,18 @@ class ReownProvider extends ChangeNotifier {
           // Continue with navigation even if storage fails
         }
       }
-
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => MainScreen(
-                    appKitModal: appKitModal,
-                  )));
-
-      // if (namespace == 'solana') {
-      //   final address = appKitModal!.session!.getAddress(namespace);
-
-      //   if (address != null) {
-
-      //     final params = await getParams(
-      //       'solana_signAndSendTransaction',
-      //       address,
-      //       appKitModal!.selectedChain!,
-      //     );
-
-      //     if (params != null) {
-      //       final sessionTopic = appKitModal!.session!.topic;
-
-      //       final result = await appKitModal!.request(
-      //         topic: sessionTopic,
-      //         chainId: chainId,
-      //         request: params,
-      //       );
-
-      //       if (result != null) {
-      //         debugPrint('[CreateToken] Transaction result: $result');
-      //         _showSuccessDialog();
-      //       } else {
-      //         throw Exception('Transaction failed');
-      //       }
-      //     } else {
-      //       throw Exception('Failed to build transaction parameters');
-      //     }
-      //   } else {
-      //     throw Exception('No wallet address found');
-      //   }
-      // } else {
-      //   // For demonstration purposes, we'll still show success for non-Solana chains
-      //   await Future.delayed(const Duration(seconds: 2));
-      //   _showSuccessDialog();
-      // }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ready to create token'),
+          backgroundColor: Colors.blue,
+        ),
+      );
+      // Navigator.push(
+      //     context,
+      //     MaterialPageRoute(
+      //         builder: (context) => MainScreen(
+      //               appKitModal: appKitModal,
+      //             )));
     } catch (e) {
       print('❌ Error in token creation: $e');
       ScaffoldMessenger.of(context).showSnackBar(
