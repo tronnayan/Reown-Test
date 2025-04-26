@@ -8,7 +8,7 @@ part of 'user_wallet_model.dart';
 
 class WalletDataAdapter extends TypeAdapter<WalletData> {
   @override
-  final int typeId = 0;
+  final int typeId = 1;
 
   @override
   WalletData read(BinaryReader reader) {

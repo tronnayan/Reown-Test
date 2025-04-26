@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'user_wallet_model.g.dart';
 
-@HiveType(typeId: 0)
+@HiveType(typeId: 1)
 class WalletData extends HiveObject {
   @HiveField(0)
   String walletAddress;
