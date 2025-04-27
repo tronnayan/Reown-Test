@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:peopleapp_flutter/core/services/reown/utils/crypto/spl_token_service.dart';
 import 'package:peopleapp_flutter/features/auth/providers/authentication_provider.dart';
 import 'package:peopleapp_flutter/features/auth/providers/reown_provider.dart';
 import 'package:peopleapp_flutter/features/auth/repo/auth_repo.dart';
@@ -19,7 +20,7 @@ void setupGetItServiceLocator() {
       () => AuthenticationProvider());
   getIt.registerLazySingleton<DashboardProvider>(() => DashboardProvider());
   getIt.registerLazySingleton<ReownProvider>(() => ReownProvider());
-  // getIt.registerLazySingleton<SplTokenService>(() => SplTokenService());
+  getIt.registerLazySingleton<SplTokenService>(() => SplTokenService());
   getIt.registerLazySingleton<GoogleAuthService>(() => GoogleAuthService());
   getIt.registerLazySingleton<HttpService>(
       () => HttpService(url_constants.EndPointsConstants.baseUrl));

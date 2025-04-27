@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:peopleapp_flutter/features/auth/models/db/user_wallet_model.dart';
@@ -5,6 +7,8 @@ import 'package:peopleapp_flutter/features/auth/service/wallet_db_service.dart';
 import 'package:peopleapp_flutter/features/main/screens/main_screen.dart';
 import 'package:reown_appkit/reown_appkit.dart';
 import 'package:reown_appkit/solana/solana_web3/solana_web3.dart' as solana;
+import 'package:reown_appkit/solana/solana_web3/src/programs/system/program.dart'
+    as programs;
 import 'package:toastification/toastification.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -12,6 +16,9 @@ import 'dart:developer' as dev;
 import '../../../core/services/reown/utils/crypto/helpers.dart';
 import '../../../core/services/reown/utils/dart_defines.dart';
 import '../../../core/services/reown/utils/deep_link_handler.dart';
+import '../../../core/services/reown/widgets/method_dialog.dart';
+import '../../../core/services/reown/utils/crypto/spl_token_service.dart';
+import '../../../core/services/get_it_service.dart';
 
 enum ConnectionStatus { disconnected, connecting, connected, expired }
 
@@ -25,13 +32,16 @@ class ReownProvider extends ChangeNotifier {
   bool _isLoading = false;
 
   bool get isLoading => _isLoading;
+
   bool get isModalSession => _getModalSession();
 
   bool _isInitialized = false;
+
   bool get isInitialized => _isInitialized;
 
   // Add connection status
   ConnectionStatus _connectionStatus = ConnectionStatus.disconnected;
+
   ConnectionStatus get connectionStatus => _connectionStatus;
 
   String get _flavor {
@@ -339,13 +349,20 @@ class ReownProvider extends ChangeNotifier {
 
   Set<String>? _featuredWalletIds() {
     return {
-      'a797aa35c0fadbfc1a53e7f675162ed5226968b44a19ee3d24385c64d1d3c393', // Phantom
-      'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', // Coinbase
-      '18450873727504ae9315a084fa7624b5297d2fe5880f0982979c17345a138277', // Kraken Wallet
-      'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // Metamask
-      '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369', // Rainbow
-      'c03dfee351b6fcc421b4494ea33b9d4b92a984f87aa76d1663bb28705e95034a', // Uniswap
-      '38f5d18bd8522c244bdd70cb4a68e0e718865155811c043f052fb9f1c51de662', // Bitget
+      'a797aa35c0fadbfc1a53e7f675162ed5226968b44a19ee3d24385c64d1d3c393',
+      // Phantom
+      'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa',
+      // Coinbase
+      '18450873727504ae9315a084fa7624b5297d2fe5880f0982979c17345a138277',
+      // Kraken Wallet
+      'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96',
+      // Metamask
+      '1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369',
+      // Rainbow
+      'c03dfee351b6fcc421b4494ea33b9d4b92a984f87aa76d1663bb28705e95034a',
+      // Uniswap
+      '38f5d18bd8522c244bdd70cb4a68e0e718865155811c043f052fb9f1c51de662',
+      // Bitget
     };
   }
 
@@ -616,39 +633,146 @@ class ReownProvider extends ChangeNotifier {
 
   Future<void> createToken(BuildContext context) async {
     try {
+      if (!isWalletConnected ||
+          appKitModal?.session == null ||
+          appKitModal?.selectedChain == null) {
+        throw Exception("Wallet not connected properly");
+      }
+
       final chainId = appKitModal!.selectedChain!.chainId;
       final namespace = NamespaceUtils.getNamespaceFromChain(chainId);
-      print('reownProvider entered name: $namespace');
-      if (appKitModal?.session != null && appKitModal?.selectedChain != null) {
-        final walletData = WalletData(
-          walletAddress: walletAddress,
-          walletBalance: walletBalance,
-          chainId: chainId,
-          chainName: appKitModal!.selectedChain!.name,
-          currency: appKitModal!.selectedChain!.currency ?? '',
-          tokenName: tokenNameController.text,
+      final address = appKitModal!.session!.getAddress(namespace);
+
+      if (address == null) {
+        throw Exception("Failed to get wallet address");
+      }
+
+      print(
+          'Creating token with name: ${tokenNameController.text} on chain: $namespace');
+
+      // Save wallet data regardless of token creation status
+      final walletData = WalletData(
+        walletAddress: walletAddress,
+        walletBalance: walletBalance,
+        chainId: chainId,
+        chainName: appKitModal!.selectedChain!.name,
+        currency: appKitModal!.selectedChain!.currency ?? '',
+        tokenName: tokenNameController.text,
+      );
+
+      // Store wallet data
+      try {
+        await HiveService.saveWalletData(walletData);
+        print('🟢 Wallet data stored successfully');
+      } catch (e) {
+        print('❌ Error storing wallet data: $e');
+        // Continue with token creation even if storage fails
+      }
+
+      // For Solana SPL token creation
+      if (namespace == 'solana') {
+        final chainInfo = ReownAppKitModalNetworks.getNetworkInfo(
+          namespace,
+          chainId,
         );
 
-        try {
-          await HiveService.saveWalletData(walletData);
-          print('🟢 Wallet data stored successfully');
-        } catch (e) {
-          print('❌ Error storing wallet data: $e');
-          // Continue with navigation even if storage fails
+        if (chainInfo == null) {
+          throw Exception("Network info not found");
         }
+
+        // Get SPL token service from GetIt
+        final splTokenService = getIt<SplTokenService>();
+        
+        // Use solana_signTransaction for token creation
+        final method = "solana_signAndSendTransaction";
+        final topic = appKitModal!.session!.topic ?? '';
+
+        // Set up Solana connection
+        final cluster = solana.Cluster.https(
+          Uri.parse(chainInfo.rpcUrl).authority,
+        );
+        final connection = solana.Connection(cluster);
+        final ownerPubkey = solana.Pubkey.fromBase58(address);
+        
+        // Create a token with the SPL token service
+        final tokenSymbol = tokenNameController.text.substring(
+          0, 
+          min(5, tokenNameController.text.length)
+        ).toUpperCase();
+        
+        // Get token transaction from service
+        final splTokenTx = await splTokenService.createToken(
+          connection: connection,
+          ownerPubkey: ownerPubkey,
+          name: tokenNameController.text,
+          symbol: tokenSymbol,
+          decimals: 9,
+          initialSupply: BigInt.from(1000000000000), // 1 trillion tokens
+        );
+
+        // Serialize the transaction for signing
+        const config =
+            solana.TransactionSerializableConfig(verifySignatures: false);
+        final bytes = splTokenTx.serialize(config).asUint8List();
+        final encodedTx = base64.encode(bytes);
+
+        // Create request params
+        final params = SessionRequestParams(
+          method: method,
+          params: {
+            'transaction': encodedTx,
+            'pubkey': address,
+            'feePayer': address,
+            // Include message data for proper transaction processing
+            ...splTokenTx.message.toJson(),
+          },
+        );
+
+        // Open wallet for signing
+        appKitModal!.launchConnectedWallet();
+
+        try {
+          // Send request and show dialog
+          final future = appKitModal!.request(
+            topic: topic,
+            chainId: chainId,
+            request: params,
+          );
+
+          MethodDialog.show(context, "Creating SPL Token", future);
+
+          // Wait for the transaction to complete before showing success message
+          await Future.delayed(const Duration(seconds: 2));
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Token created successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // if (context.mounted) {
+          //   Navigator.pushReplacement(
+          //     context,
+          //     MaterialPageRoute(
+          //       builder: (context) => MainScreen(appKitModal: appKitModal),
+          //     ),
+          //   );
+          // }
+        } catch (e) {
+          print('Transaction signing error: $e');
+          throw Exception('Failed to sign transaction: $e');
+        }
+      } else {
+        // For other chains
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Token creation not implemented for $namespace chains yet'),
+            backgroundColor: Colors.orange,
+          ),
+        );
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ready to create token'),
-          backgroundColor: Colors.blue,
-        ),
-      );
-      // Navigator.push(
-      //     context,
-      //     MaterialPageRoute(
-      //         builder: (context) => MainScreen(
-      //               appKitModal: appKitModal,
-      //             )));
     } catch (e) {
       print('❌ Error in token creation: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -723,5 +847,16 @@ class ReownProvider extends ChangeNotifier {
     appKitModal!.onModalNetworkChange.subscribe(_onModalNetworkChange);
     appKitModal!.onModalDisconnect.subscribe(_onModalDisconnect);
     appKitModal!.onModalError.subscribe(_onModalError);
+  }
+}
+
+// Extension method to convert BigInt to bytes
+extension BigIntExtension on BigInt {
+  Uint8List toBytes(int length) {
+    var result = Uint8List(length);
+    for (var i = 0; i < length; i++) {
+      result[i] = (this >> (8 * i)).toUnsigned(8).toInt();
+    }
+    return result;
   }
 }
