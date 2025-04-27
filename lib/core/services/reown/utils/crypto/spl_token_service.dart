@@ -88,14 +88,7 @@ class SplTokenService {
       );
     }
 
-    // 5. Build the transaction
-    final transaction = solana.Transaction.v0(
-      payer: ownerPubkey,
-      recentBlockhash: blockhash.blockhash,
-      instructions: instructions,
-    );
-
-    // 6. (NEW) Create Token Metadata
+    // 5. Create Token Metadata
     final metadataPda = await solana.Pubkey.findProgramAddress(
       [
         utf8.encode('metadata'),
@@ -106,10 +99,10 @@ class SplTokenService {
     );
 
     // Build metadata data
-    final nameFixed = name.padRight(32).substring(0, 32); // Metaplex name max 32 chars
-    final symbolFixed = symbol.padRight(10).substring(0, 10); // Metaplex symbol max 10 chars
+    final nameFixed = name; // Metaplex name max 32 chars
+    final symbolFixed = symbol; // Metaplex symbol max 10 chars
 
-    final uriFixed = 'https://worthy-swine-mutual.ngrok-free.app/api/core/token.json'.padRight(200).substring(0, 200);
+    final uriFixed = 'https://worthy-swine-mutual.ngrok-free.app/api/core/token.json';
 
     // Build Metadata Instruction
     instructions.add(
@@ -131,6 +124,12 @@ class SplTokenService {
       ),
     );
 
+    // 6. Build the transaction
+    final transaction = solana.Transaction.v0(
+      payer: ownerPubkey,
+      recentBlockhash: blockhash.blockhash,
+      instructions: instructions,
+    );
     return transaction;
   }
 }
@@ -141,7 +140,7 @@ Uint8List _buildCreateMetadataV3InstructionData(
     ) {
   final buffer = BytesBuilder();
 
-  buffer.addByte(0); // Instruction: CreateMetadataAccountV3 (discriminator 0)
+  buffer.addByte(33); // Instruction: CreateMetadataAccountV3 (discriminator 0)
 
   // 1. DataV2 struct starts
   buffer.add(_encodeRustString(name));     // name (string, Rust format)
