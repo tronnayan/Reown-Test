@@ -1,124 +1,182 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:reown_appkit/reown_appkit.dart';
 import 'package:reown_appkit/solana/solana_web3/solana_web3.dart' as solana;
+import 'package:reown_appkit/solana/solana_web3/programs.dart' as programs;
 
-/// SPL Token Service - Handles operations related to SPL tokens
-///
-/// This service provides methods to create and manage SPL tokens on Solana.
-/// It is currently a placeholder for a full implementation that would require:
-/// 1. Proper SPL Token program integration
-/// 2. Metaplex integration for token metadata
-/// 3. Handling of token accounts and minting
+/// SPL Token Service - Handles proper SPL token creation
 class SplTokenService {
-  // SPL Token Program ID on Solana
   final String TOKEN_PROGRAM_ID = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
-
-  // Associated Token Account Program ID
   final String ASSOCIATED_TOKEN_PROGRAM_ID = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
-
-  // Metaplex Token Metadata Program ID for token metadata
   final String TOKEN_METADATA_PROGRAM_ID = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s';
 
-  /// Creates a new SPL token with standard parameters
-  ///
-  /// This is a placeholder for real implementation. To properly implement SPL token creation:
-  ///
-  /// 1. Create a new mint account (requires a new keypair)
-  /// 2. Initialize the mint with decimals and authority
-  /// 3. Create associated token account for the owner
-  /// 4. Mint initial tokens to the associated account
-  /// 5. Add metadata (name, symbol, image) using Metaplex
-  ///
-  /// @param connection Solana connection to use
-  /// @param ownerPubkey Public key of the token owner/creator
-  /// @param name Token name
-  /// @param symbol Token symbol (abbreviated name)
-  /// @param decimals Number of decimal places (typically 9)
-  /// @param initialSupply Initial token supply to mint
-  /// @param uri (Optional) URI to token metadata (image, description)
   Future<solana.Transaction> createToken({
     required solana.Connection connection,
     required solana.Pubkey ownerPubkey,
     required String name,
     required String symbol,
+    required solana.Keypair mintKeypair, // NEW: pass mint keypair
     int decimals = 9,
-    BigInt? initialSupply,
-    String? uri,
+    BigInt? initialSupply, // optional
   }) async {
-    // 1. Get recent blockhash for transaction
     final blockhash = await connection.getLatestBlockhash();
 
-    // 2. Create a new keypair for the mint account
-    // In production, you might want to derive this deterministically
-    final mintKeypair = solana.Keypair.generate();
-
-    // 3. Calculate minimum rent for token mint
-    // In production, you'd query this from the connection
-    final int rentExemption = 10000000;
-
-    // 4. Build instructions
     final List<solana.TransactionInstruction> instructions = [];
 
-    // TODO:
-    // - Add instruction to create mint account
-    // - Add instruction to initialize mint
-    // - Add instruction to create associated token account
-    // - Add instruction to mint initial tokens
-    // - Add instruction to create metadata (using Metaplex)
+    // 1. Create the Mint account
+    final rentExemption = await connection.getMinimumBalanceForRentExemption(82); // 82 bytes for Mint account
 
-    // For now, create a placeholder transaction that transfers a minimal amount
-    final dummyRecipient = solana.Pubkey.fromBase58('11111111111111111111111111111111');
-
-    final instruction = solana.TransactionInstruction(
-      keys: [
-        solana.AccountMeta(ownerPubkey, isSigner: true, isWritable: true),
-        solana.AccountMeta(dummyRecipient, isSigner: false, isWritable: true),
-      ],
-      programId: solana.Pubkey.fromBase58('11111111111111111111111111111111'),
-      data: Uint8List(0),
+    instructions.add(
+      programs.SystemProgram.createAccount(
+        fromPubkey: ownerPubkey,
+        newAccountPubkey: mintKeypair.pubkey,
+        lamports: BigInt.from(rentExemption),
+        space: BigInt.from(82),
+        programId: solana.Pubkey.fromBase58(TOKEN_PROGRAM_ID),
+      ),
     );
 
-    instructions.add(instruction);
+    // 2. Initialize the Mint
+    instructions.add(
+      programs.TokenProgram.initializeMint(
+        mint: mintKeypair.pubkey,
+        decimals: decimals,
+        mintAuthority: ownerPubkey,
+        freezeAuthority: ownerPubkey,
+      ),
+    );
 
-    // 5. Create and return transaction
+    final List<List<int>> seeds = [
+      ownerPubkey.toBytes(),           // Owner wallet address
+      solana.Pubkey.fromBase58(TOKEN_PROGRAM_ID).toBytes(), // Token Program ID
+      mintKeypair.pubkey.toBytes(),    // Mint address
+    ];
+
+    final associatedTokenAddress = await solana.Pubkey.findProgramAddress(
+      [
+        ownerPubkey.toBytes(),
+        solana.Pubkey.fromBase58(TOKEN_PROGRAM_ID).toBytes(),
+        mintKeypair.pubkey.toBytes(),
+      ],
+      solana.Pubkey.fromBase58(ASSOCIATED_TOKEN_PROGRAM_ID),
+    );
+
+    instructions.add(
+      solana.TransactionInstruction(
+        programId: solana.Pubkey.fromBase58(ASSOCIATED_TOKEN_PROGRAM_ID),
+        keys: [
+          solana.AccountMeta(ownerPubkey, isSigner: true, isWritable: true),
+          solana.AccountMeta(associatedTokenAddress.pubkey, isSigner: false, isWritable: true),
+          solana.AccountMeta(ownerPubkey, isSigner: false, isWritable: false),
+          solana.AccountMeta(mintKeypair.pubkey, isSigner: false, isWritable: false),
+          solana.AccountMeta(programs.SystemProgram.programId, isSigner: false, isWritable: false),
+          solana.AccountMeta(solana.Pubkey.fromBase58(TOKEN_PROGRAM_ID), isSigner: false, isWritable: false),
+          solana.AccountMeta(solana.Pubkey.fromBase58('SysvarRent111111111111111111111111111111111'), isSigner: false, isWritable: false),
+        ],
+        data: Uint8List(0),
+      ),
+    );
+
+    if (initialSupply != null && initialSupply > BigInt.zero) {
+      instructions.add(
+        programs.TokenProgram.mintTo(
+          mint: mintKeypair.pubkey,
+          account: associatedTokenAddress.pubkey,
+          mintAuthority: ownerPubkey,
+          amount: initialSupply,
+        ),
+      );
+    }
+
+    // 5. Build the transaction
     final transaction = solana.Transaction.v0(
       payer: ownerPubkey,
       recentBlockhash: blockhash.blockhash,
       instructions: instructions,
     );
 
+    // 6. (NEW) Create Token Metadata
+    final metadataPda = await solana.Pubkey.findProgramAddress(
+      [
+        utf8.encode('metadata'),
+        solana.Pubkey.fromBase58(TOKEN_METADATA_PROGRAM_ID).toBytes(),
+        mintKeypair.pubkey.toBytes(),
+      ],
+      solana.Pubkey.fromBase58(TOKEN_METADATA_PROGRAM_ID),
+    );
+
+    // Build metadata data
+    final nameFixed = name.padRight(32).substring(0, 32); // Metaplex name max 32 chars
+    final symbolFixed = symbol.padRight(10).substring(0, 10); // Metaplex symbol max 10 chars
+
+    final uriFixed = 'https://worthy-swine-mutual.ngrok-free.app/api/core/token.json'.padRight(200).substring(0, 200);
+
+    // Build Metadata Instruction
+    instructions.add(
+      solana.TransactionInstruction(
+        programId: solana.Pubkey.fromBase58(TOKEN_METADATA_PROGRAM_ID),
+        keys: [
+          solana.AccountMeta(metadataPda.pubkey, isSigner: false, isWritable: true),
+          solana.AccountMeta(mintKeypair.pubkey, isSigner: false, isWritable: false),
+          solana.AccountMeta(ownerPubkey, isSigner: true, isWritable: false),
+          solana.AccountMeta(ownerPubkey, isSigner: true, isWritable: false),
+          solana.AccountMeta(programs.SystemProgram.programId, isSigner: false, isWritable: false),
+          solana.AccountMeta(solana.Pubkey.fromBase58('SysvarRent111111111111111111111111111111111'), isSigner: false, isWritable: false),
+        ],
+        data: _buildCreateMetadataV3InstructionData(
+          nameFixed,
+          symbolFixed,
+          uriFixed,
+        ),
+      ),
+    );
+
     return transaction;
   }
-
-  /// Implementation notes for proper SPL token creation:
-  ///
-  /// To properly implement SPL token creation, you need to:
-  ///
-  /// 1. Create a new mint account:
-  ///    - Generate a keypair for the mint
-  ///    - Calculate space required for mint account (82 bytes)
-  ///    - Calculate minimum rent exemption
-  ///    - Create account with SystemProgram.createAccount instruction
-  ///
-  /// 2. Initialize the mint:
-  ///    - Set decimals (typically 9 for fungible tokens)
-  ///    - Set mint authority (who can mint new tokens)
-  ///    - Set freeze authority (can freeze token accounts)
-  ///
-  /// 3. Create Associated Token Account for owner:
-  ///    - Find PDA for associated token account
-  ///    - Create account with AssociatedTokenProgram
-  ///
-  /// 4. Mint initial supply:
-  ///    - Mint tokens to the associated token account
-  ///
-  /// 5. Create metadata (optional but recommended):
-  ///    - Use Metaplex Token Metadata program
-  ///    - Set name, symbol, URI for off-chain metadata
-  ///
-  /// Resources for implementation:
-  /// - Solana Cookbook: https://solanacookbook.com/references/token.html
-  /// - SPL Token GitHub: https://github.com/solana-labs/solana-program-library/tree/master/token
-  /// - Metaplex Token Metadata: https://docs.metaplex.com/programs/token-metadata/
-
 }
+Uint8List _buildCreateMetadataV3InstructionData(
+    String name,
+    String symbol,
+    String uri,
+    ) {
+  final buffer = BytesBuilder();
+
+  buffer.addByte(0); // Instruction: CreateMetadataAccountV3 (discriminator 0)
+
+  // 1. DataV2 struct starts
+  buffer.add(_encodeRustString(name));     // name (string, Rust format)
+  buffer.add(_encodeRustString(symbol));   // symbol (string, Rust format)
+  buffer.add(_encodeRustString(uri));      // uri (string, Rust format)
+
+  buffer.add(_u16le(0)); // sellerFeeBasisPoints = 0 (0% royalty)
+
+  buffer.addByte(0); // creators: None
+  buffer.addByte(0); // collection: None
+  buffer.addByte(0); // uses: None
+  // 1. DataV2 struct ends
+
+  buffer.addByte(1); // isMutable = true
+
+  buffer.addByte(0); // collectionDetails: None (new field added in v3)
+
+  return buffer.toBytes();
+}
+
+Uint8List _encodeRustString(String value) {
+  final bytes = utf8.encode(value);
+  final length = _u32le(bytes.length);
+  return Uint8List.fromList([...length, ...bytes]);
+}
+
+Uint8List _u16le(int value) {
+  final bytes = ByteData(2);
+  bytes.setUint16(0, value, Endian.little);
+  return bytes.buffer.asUint8List();
+}
+
+Uint8List _u32le(int value) {
+  final bytes = ByteData(4);
+  bytes.setUint32(0, value, Endian.little);
+  return bytes.buffer.asUint8List();
+}
+
