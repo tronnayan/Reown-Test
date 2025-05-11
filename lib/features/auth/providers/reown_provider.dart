@@ -97,7 +97,7 @@ class ReownProvider extends ChangeNotifier {
 
     appKit = ReownAppKit(
       core: ReownCore(
-        projectId: DartDefines.projectId,
+        projectId: '6c4e5758818e291bb40974a54356aac6',
         logLevel: LogLevel.all,
       ),
       metadata: _pairingMetadata(linkModeEnabled),
@@ -403,7 +403,7 @@ class ReownProvider extends ChangeNotifier {
             args.message,
             cacaoSignature,
             chainId,
-            '07369924ad001504888aad7a8a9e8bcd', // Your project ID
+            '6c4e5758818e291bb40974a54356aac6', // Your project ID
           );
         },
         getSession: () async {
