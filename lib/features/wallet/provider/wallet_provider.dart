@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:peopleapp_flutter/core/routes/app_path_constants.dart';
+import 'package:peopleapp_flutter/core/routes/app_routes.dart';
 import 'package:peopleapp_flutter/features/auth/models/db/user_wallet_model.dart';
 import 'package:peopleapp_flutter/features/auth/providers/reown_provider.dart';
 import 'package:peopleapp_flutter/features/auth/service/wallet_db_service.dart';
@@ -87,6 +89,13 @@ class WalletProvider extends ChangeNotifier {
   void clearError() {
     _error = '';
     notifyListeners();
+  }
+
+  void connectWallet({required BuildContext context}) {
+    NavigationService.navigateTo(
+      context,
+      RouteConstants.createTokenScreen,
+    );
   }
 }
 

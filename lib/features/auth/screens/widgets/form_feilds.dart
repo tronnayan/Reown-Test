@@ -9,6 +9,7 @@ class FormFields extends StatelessWidget {
     required this.hintText,
     this.enabled = false,
     this.keyboardType = TextInputType.text,
+    required this.onChanged,
   });
 
   final TextEditingController controller;
@@ -16,11 +17,12 @@ class FormFields extends StatelessWidget {
   final String hintText;
   final bool enabled;
   final TextInputType keyboardType;
-
+  final Function(String value) onChanged;
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         hintText: hintText,

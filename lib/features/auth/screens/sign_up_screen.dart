@@ -74,6 +74,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     label: 'Full Name',
                     hintText: 'Enter your full name',
                     enabled: true,
+                    onChanged: (value) => provider.checkSignUpValidation(value),
                   ),
                   const SizedBox(height: 16),
                   FormFields(
@@ -81,6 +82,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     label: 'Email',
                     hintText: 'Enter your email',
                     enabled: true,
+                    onChanged: (value) => provider.checkSignUpValidation(value),
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 16),

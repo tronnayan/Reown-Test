@@ -34,6 +34,10 @@ class _WalletScreenState extends State<WalletScreen>
             onBuyTapped: _showBuyDialog,
             onDepositTapped: _showDepositDialog,
             onWithdrawTapped: _showWithdrawDialog,
+            isWalletConnected: walletProvider.hasWallet,
+            onConnectWalletTapped: () {
+              walletProvider.connectWallet(context: context);
+            },
           ),
           SocialNetworthCard(
             walletProvider: walletProvider,

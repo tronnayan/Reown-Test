@@ -8,7 +8,7 @@ import 'package:peopleapp_flutter/features/main/screens/main_screen.dart';
 import 'package:reown_appkit/reown_appkit.dart';
 import 'package:reown_appkit/solana/solana_web3/solana_web3.dart' as solana;
 import 'package:reown_appkit/solana/solana_web3/src/programs/system/program.dart'
-as programs;
+    as programs;
 import 'package:toastification/toastification.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -217,16 +217,16 @@ class ReownProvider extends ChangeNotifier {
           isTestNetwork: true,
         ),
       ]);
-      ReownAppKitModalNetworks.addSupportedNetworks('mvx', [
-        ReownAppKitModalNetworkInfo(
-          name: 'MultiversX',
-          chainId: '1',
-          currency: 'EGLD',
-          rpcUrl: 'https://api.multiversx.com',
-          explorerUrl: 'https://explorer.multiversx.com',
-          chainIcon: 'https://avatars.githubusercontent.com/u/114073177',
-        ),
-      ]);
+      // ReownAppKitModalNetworks.addSupportedNetworks('mvx', [
+      //   ReownAppKitModalNetworkInfo(
+      //     name: 'MultiversX',
+      //     chainId: '1',
+      //     currency: 'EGLD',
+      //     rpcUrl: 'https://api.multiversx.com',
+      //     explorerUrl: 'https://explorer.multiversx.com',
+      //     chainIcon: 'https://avatars.githubusercontent.com/u/114073177',
+      //   ),
+      // ]);
     } else {
       ReownAppKitModalNetworks.removeSupportedNetworks('solana');
     }
@@ -367,62 +367,62 @@ class ReownProvider extends ChangeNotifier {
   }
 
   SIWEConfig _siweConfig(bool enabled) => SIWEConfig(
-    getNonce: () async {
-      return SIWEUtils.generateNonce();
-    },
-    getMessageParams: () async {
-      debugPrint('[SIWEConfig] getMessageParams()');
-      final url = appKitModal!.appKit!.metadata.url;
-      final uri = Uri.parse(url);
-      return SIWEMessageArgs(
-        domain: uri.authority,
-        uri: 'https://${uri.authority}/login',
-        statement: 'Welcome to PeopleApp.',
-        methods: MethodsConstants.allMethods,
+        getNonce: () async {
+          return SIWEUtils.generateNonce();
+        },
+        getMessageParams: () async {
+          debugPrint('[SIWEConfig] getMessageParams()');
+          final url = appKitModal!.appKit!.metadata.url;
+          final uri = Uri.parse(url);
+          return SIWEMessageArgs(
+            domain: uri.authority,
+            uri: 'https://${uri.authority}/login',
+            statement: 'Welcome to PeopleApp.',
+            methods: MethodsConstants.allMethods,
+          );
+        },
+        createMessage: (SIWECreateMessageArgs args) {
+          debugPrint('[SIWEConfig] createMessage()');
+          return SIWEUtils.formatMessage(args);
+        },
+        verifyMessage: (SIWEVerifyMessageArgs args) async {
+          debugPrint('[SIWEConfig] verifyMessage()');
+          final chainId = SIWEUtils.getChainIdFromMessage(args.message);
+          final address = SIWEUtils.getAddressFromMessage(args.message);
+          final cacaoSignature = args.cacao != null
+              ? args.cacao!.s
+              : CacaoSignature(
+                  t: CacaoSignature.EIP191,
+                  s: args.signature,
+                );
+          return await SIWEUtils.verifySignature(
+            address,
+            args.message,
+            cacaoSignature,
+            chainId,
+            '07369924ad001504888aad7a8a9e8bcd', // Your project ID
+          );
+        },
+        getSession: () async {
+          final chainId = appKitModal!.selectedChain!.chainId;
+          final namespace = NamespaceUtils.getNamespaceFromChain(chainId);
+          final address = appKitModal!.session!.getAddress(namespace)!;
+          return SIWESession(address: address, chains: [chainId]);
+        },
+        onSignIn: (SIWESession session) {
+          debugPrint('[SIWEConfig] onSignIn()');
+        },
+        signOut: () async {
+          return true;
+        },
+        onSignOut: () {
+          debugPrint('[SIWEConfig] onSignOut()');
+        },
+        enabled: enabled,
+        signOutOnDisconnect: true,
+        signOutOnAccountChange: false,
+        signOutOnNetworkChange: false,
       );
-    },
-    createMessage: (SIWECreateMessageArgs args) {
-      debugPrint('[SIWEConfig] createMessage()');
-      return SIWEUtils.formatMessage(args);
-    },
-    verifyMessage: (SIWEVerifyMessageArgs args) async {
-      debugPrint('[SIWEConfig] verifyMessage()');
-      final chainId = SIWEUtils.getChainIdFromMessage(args.message);
-      final address = SIWEUtils.getAddressFromMessage(args.message);
-      final cacaoSignature = args.cacao != null
-          ? args.cacao!.s
-          : CacaoSignature(
-        t: CacaoSignature.EIP191,
-        s: args.signature,
-      );
-      return await SIWEUtils.verifySignature(
-        address,
-        args.message,
-        cacaoSignature,
-        chainId,
-        '07369924ad001504888aad7a8a9e8bcd', // Your project ID
-      );
-    },
-    getSession: () async {
-      final chainId = appKitModal!.selectedChain!.chainId;
-      final namespace = NamespaceUtils.getNamespaceFromChain(chainId);
-      final address = appKitModal!.session!.getAddress(namespace)!;
-      return SIWESession(address: address, chains: [chainId]);
-    },
-    onSignIn: (SIWESession session) {
-      debugPrint('[SIWEConfig] onSignIn()');
-    },
-    signOut: () async {
-      return true;
-    },
-    onSignOut: () {
-      debugPrint('[SIWEConfig] onSignOut()');
-    },
-    enabled: enabled,
-    signOutOnDisconnect: true,
-    signOutOnAccountChange: false,
-    signOutOnNetworkChange: false,
-  );
 
   void _onSessionPing(SessionPing? args) {
     debugPrint('[CreateToken] _onSessionPing $args');
@@ -496,7 +496,7 @@ class ReownProvider extends ChangeNotifier {
 
         // Get the SOL balance
         final lamports =
-        await connection.getBalance(solana.Pubkey.fromBase58(address));
+            await connection.getBalance(solana.Pubkey.fromBase58(address));
         // Convert lamports to SOL (1 SOL = 1,000,000,000 lamports)
         balance = lamports.toDouble() / 1000000000;
 
@@ -695,10 +695,9 @@ class ReownProvider extends ChangeNotifier {
         final ownerPubkey = solana.Pubkey.fromBase58(address);
 
         // Create a token with the SPL token service
-        final tokenSymbol = tokenNameController.text.substring(
-            0,
-            min(5, tokenNameController.text.length)
-        ).toUpperCase();
+        final tokenSymbol = tokenNameController.text
+            .substring(0, min(5, tokenNameController.text.length))
+            .toUpperCase();
         final mintKeypair = await solana.Keypair.generate();
         // Get token transaction from service
         final splTokenTx = await splTokenService.createToken(
@@ -708,11 +707,13 @@ class ReownProvider extends ChangeNotifier {
           name: tokenNameController.text,
           symbol: tokenSymbol,
           decimals: 9,
-          initialSupply: BigInt.parse('10000000000000000000'), // 10 billion tokens
+          initialSupply:
+              BigInt.parse('10000000000000000000'), // 10 billion tokens
         );
 
         // Serialize the transaction for signing
-        const config = solana.TransactionSerializableConfig(verifySignatures: false);
+        const config =
+            solana.TransactionSerializableConfig(verifySignatures: false);
         splTokenTx.sign([mintKeypair]);
         final bytes = splTokenTx.serialize(config).asUint8List();
         final encodedTx = base64.encode(bytes);

@@ -24,109 +24,119 @@ class LoginScreen extends StatelessWidget {
             builder: (context, authProvider, child) {
           return Stack(
             children: [
-              // Image.asset(
-              //   ImageConstants.logoCoinBg,
-              //   height: 400,
-              // ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    PrimaryButton(
-                      text: 'Send OTP',
-                      onPressed: () => authProvider.sentOtp(
-                        email: _emailController.text,
-                        context: context,
-                      ),
-                      isPrimary: true,
-                    ),
-                    const SizedBox(height: 24),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Terms of Use',
-                          style: TextStyle(
-                            color: ColorConstants.greyText,
-                            fontSize: 14,
-                          ),
-                        ),
-                        SizedBox(width: 16),
-                        Text(
-                          'Privacy Policy',
-                          style: TextStyle(
-                            color: ColorConstants.greyText,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 40),
-                  CustomButton.backButton(context),
-                  Image.asset(
-                    ImageConstants.peopleLogo,
-                    width: 200,
-                    height: 100,
-                  ),
-                  const SizedBox(height: 40),
-                  const Text(
-                    'Login ',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 42,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(
-                      'Join your community of creators and investors',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  FormFields(
-                    controller: _emailController,
-                    label: 'Email',
-                    hintText: 'Enter your email',
-                    enabled: true,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 24),
-                  TextButton(
-                    onPressed: () => {
-                      NavigationService.navigateTo(
-                          context, RouteConstants.signupScreen)
-                    },
-                    child: const Text(
-                      'Don\'t have an account? Sign up',
-                      style: TextStyle(
-                        color: ColorConstants.primaryPurple,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        decoration: TextDecoration.underline,
-                        decorationColor: ColorConstants.primaryPurple,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              _bottomButton(context: context, authProvider: authProvider),
+              _mainContent(context: context, authProvider: authProvider),
             ],
           );
         }),
+      ),
+    );
+  }
+
+  _mainContent(
+      {required BuildContext context,
+      required AuthenticationProvider authProvider}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const SizedBox(height: 40),
+        CustomButton.backButton(context),
+        Image.asset(
+          ImageConstants.peopleLogo,
+          width: 200,
+          height: 100,
+        ),
+        const SizedBox(height: 40),
+        const Text(
+          'Login ',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 42,
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            'Join your community of creators and investors',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 12,
+            ),
+          ),
+        ),
+        const SizedBox(height: 32),
+        FormFields(
+          controller: _emailController,
+          label: 'Email',
+          hintText: 'Enter your email',
+          enabled: true,
+          onChanged: (value) {},
+          keyboardType: TextInputType.emailAddress,
+        ),
+        const SizedBox(height: 24),
+        TextButton(
+          onPressed: () => {
+            NavigationService.navigateTo(context, RouteConstants.signupScreen)
+          },
+          child: const Text(
+            'Don\'t have an account? Sign up',
+            style: TextStyle(
+              color: ColorConstants.primaryPurple,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              decoration: TextDecoration.underline,
+              decorationColor: ColorConstants.primaryPurple,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  _bottomButton({
+    required BuildContext context,
+    required AuthenticationProvider authProvider,
+  }) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PrimaryButton(
+            text: 'Send OTP',
+            onPressed: () => authProvider.sentOtp(
+              email: _emailController.text,
+              context: context,
+            ),
+            isLoading: authProvider.isLoading,
+            isPrimary: true,
+          ),
+          const SizedBox(height: 24),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Terms of Use',
+                style: TextStyle(
+                  color: ColorConstants.greyText,
+                  fontSize: 14,
+                ),
+              ),
+              SizedBox(width: 16),
+              Text(
+                'Privacy Policy',
+                style: TextStyle(
+                  color: ColorConstants.greyText,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

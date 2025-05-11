@@ -48,11 +48,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
       width: double.infinity,
       height: 54,
       child: ElevatedButton(
-        onPressed: widget.isLoading
-            ? null
-            : widget.isDisabled
-                ? null
-                : widget.onPressed,
+        onPressed: widget.isLoading ? null : widget.onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: widget.isPrimary
               ? widget.isDisabled

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:peopleapp_flutter/core/constants/image_constants.dart';
+import 'package:peopleapp_flutter/core/widgets/toast_widget.dart';
 import 'package:peopleapp_flutter/features/auth/models/social_connect_model.dart';
 import 'package:peopleapp_flutter/core/routes/app_path_constants.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
@@ -36,7 +37,7 @@ class _SocialConnectionsSheetState extends State<SocialConnectionsSheet> {
         icon: ImageConstants.youtubeIcon,
         title: 'YouTube',
         subtitle: 'YouTube channel',
-        isConnected: true,
+        isConnected: false,
         onTap: () => _handleSocialConnect('YouTube'),
       ),
       SocialModel(
@@ -66,6 +67,9 @@ class _SocialConnectionsSheetState extends State<SocialConnectionsSheet> {
       socialModel.isConnected = !socialModel.isConnected;
       isCompleted = (count == (socialModels.length - 1));
     });
+
+    Toast.show('$title connected successfully');
+
     print("${socialModels.length} ${count} ${isCompleted}");
   }
 

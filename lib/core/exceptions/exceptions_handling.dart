@@ -6,8 +6,8 @@ class ExceptionHandler {
   static handle(dynamic error) {
     final exception = _convertToAppException(error);
 
-    // Show user message
-    _showUserMessage(exception.message);
+    // // Show user message
+    // _showUserMessage(exception.message);
 
     // Log if needed
     if (exception.shouldLog) {

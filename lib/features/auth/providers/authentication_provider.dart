@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -25,6 +26,8 @@ class AuthenticationProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  bool isValid = false;
+
   final AuthRepo authRepo = getIt<AuthRepo>();
   final GoogleAuthService googleAuthService = getIt<GoogleAuthService>();
 
@@ -32,8 +35,8 @@ class AuthenticationProvider extends ChangeNotifier {
     try {
       final User? user = await googleAuthService.signInWithGoogle();
       if (user != null) {
-        user.getIdToken().then((value) {
-          final resp = authRepo.authenticate(
+        user.getIdToken().then((value) async {
+          final AuthResponse response = await authRepo.authenticate(
             request: LoginRequest(
               authType: AuthType.GOOGLE_LOGIN,
               email: user.email!,
@@ -42,6 +45,15 @@ class AuthenticationProvider extends ChangeNotifier {
               authToken: value ?? '',
             ),
           );
+          if (response.statusCode == 200) {
+            log('response: ${response.data.toJson()}');
+            await UserDbService.saveUserData(
+                UserDbModel.fromJson(response.data.toJson()));
+            NavigationService.navigateOffAll(
+                context, RouteConstants.createTokenScreen);
+          } else {
+            Toast.show('Something went wrong, try again !');
+          }
         });
       }
     } catch (e) {
@@ -72,15 +84,20 @@ class AuthenticationProvider extends ChangeNotifier {
         final ApiResponse response = await authRepo.sendOtp(
           email: email,
         );
-        print('send otp response: ${response.toString()}');
+
         if (response.statusCode == 200) {
           _setIsLoading(false);
-          AuthBottomSheets.showOtpBottomSheet(context,
-              email: email,
-              isLoading: _isLoading,
-              onComplete: (otp) =>
-                  verifyOtp(context: context, email: email, otp: otp),
-              onResend: () => resendOtp(email: email, context: context));
+          AuthBottomSheets.showOtpBottomSheet(
+            context,
+            email: email,
+            isLoading: _isLoading,
+            onComplete: (otp) =>
+                verifyOtp(context: context, email: email, otp: otp),
+            onResend: () => resendOtp(email: email, context: context),
+          );
+        } else {
+          _setIsLoading(false);
+          Toast.show('Something went wrong, try again !');
         }
         notifyListeners();
       }
@@ -90,10 +107,12 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> verifyOtp(
-      {required String otp,
-      required String email,
-      required BuildContext context}) async {
+  Future<void> verifyOtp({
+    required String otp,
+    required String email,
+    required BuildContext context,
+  }) async {
+    _setIsLoading(true);
     try {
       final AuthResponse response = await authRepo.authenticate(
         request: LoginRequest(
@@ -105,13 +124,19 @@ class AuthenticationProvider extends ChangeNotifier {
         ),
       );
       if (response.statusCode == 200) {
+        _setIsLoading(false);
+        log('response: ${response.data.toJson()}');
         await UserDbService.saveUserData(
             UserDbModel.fromJson(response.data.toJson()));
         NavigationService.navigateOffAll(
             context, RouteConstants.createTokenScreen);
+      } else {
+        _setIsLoading(false);
+        Toast.show('Please enter valid OTP');
       }
     } catch (e) {
-      print(e);
+      _setIsLoading(false);
+      Toast.show('Something went wrong, try again !');
     }
   }
 
@@ -184,6 +209,11 @@ class AuthenticationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  _setIsValid(bool value) {
+    isValid = value;
+    notifyListeners();
+  }
+
   bool _checkSignUpForm(
       {required String email, required String name, required String dob}) {
     if (!_checkEmail(email)) {
@@ -201,6 +231,14 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
+  checkLoginValidation(String value) {
+    if (!_checkEmail(value)) {
+      _setIsValid(false);
+    } else {
+      _setIsValid(true);
+    }
+  }
+
   Future<bool> checkAuthStatus() async {
     try {
       bool isUserLoggedIn = false;
@@ -212,5 +250,16 @@ class AuthenticationProvider extends ChangeNotifier {
     } catch (e) {
       return false;
     }
+  }
+
+  checkSignUpValidation(String value) {}
+
+  void logout({required BuildContext context}) {
+    FirebaseAuth.instance.signOut();
+    UserDbService.clearUserData();
+    NavigationService.navigateOffAll(
+      context,
+      RouteConstants.welcomeScreen,
+    );
   }
 }

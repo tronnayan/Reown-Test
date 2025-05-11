@@ -13,11 +13,18 @@ class AuthBottomSheets {
       isScrollControlled: true,
       barrierColor: ColorConstants.barrierColor,
       context: context,
-      builder: (context) => OtpBottomSheet(
-        isLoading: isLoading,
-        email: email,
-        onComplete: onComplete,
-        onResend: onResend,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SingleChildScrollView(
+          child: OtpBottomSheet(
+            isLoading: isLoading,
+            email: email,
+            onComplete: onComplete,
+            onResend: onResend,
+          ),
+        ),
       ),
     );
   }

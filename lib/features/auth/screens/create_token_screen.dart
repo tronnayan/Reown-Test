@@ -24,17 +24,22 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await context.read<ReownProvider>().initializeService(context);
+      // await context.read<ReownProvider>().initializeService(context);
+      final reownProvider = context.read<ReownProvider>();
 
-      // AuthBottomSheets.showSocialConnectionsBottomSheet(context, onDone: () {
-      //   Navigator.pop(context);
-      // });
+      // If we haven’t already, initialize with THIS context so overlays work
+
+      await reownProvider.initializeService(context);
+
+      AuthBottomSheets.showSocialConnectionsBottomSheet(context, onDone: () {
+        Navigator.pop(context);
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ReownProvider>(builder: (context, provider, child) {
+    return Consumer<ReownProvider>(builder: (bContext, provider, child) {
       // WidgetsBinding.instance.addPostFrameCallback((_) async {
       //   if (provider.isLoading && !provider.isWalletConnected) {
       //     showLoadingDialog(context);
@@ -211,7 +216,11 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
                   isPrimary: true,
                   onPressed: () async {
                     try {
-                      provider.connectionStatus == ConnectionStatus.connected ? await provider.createToken(context): await provider.connectWallet(context);
+                      ((provider.connectionStatus ==
+                                  ConnectionStatus.connected) &&
+                              provider.isWalletConnected)
+                          ? await provider.createToken(context)
+                          : await provider.connectWallet(context);
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -228,11 +237,8 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
                   text: 'Skip',
                   isPrimary: false,
                   onPressed: () {
-                    provider.appKitModal!.disconnect();
-                    // Navigator.push(
-                    //     context,
-                    //     MaterialPageRoute(
-                    //         builder: (context) => const DashboardScreen()));
+                    NavigationService.navigateOffAll(
+                        context, RouteConstants.mainScreen);
                   },
                 ),
                 const SizedBox(height: 36),

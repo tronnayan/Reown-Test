@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:peopleapp_flutter/features/auth/providers/authentication_provider.dart';
 import 'package:peopleapp_flutter/features/auth/screens/login_screen.dart';
 import 'package:peopleapp_flutter/features/auth/screens/splash_screen.dart';
 import 'package:peopleapp_flutter/more_screens/bookmarks_screen.dart';
@@ -8,6 +9,7 @@ import 'package:peopleapp_flutter/more_screens/refer_and_earn_screen.dart';
 import 'package:peopleapp_flutter/more_screens/spin_wheel_screen.dart';
 import 'package:peopleapp_flutter/more_screens/support_screen.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
+import 'package:provider/provider.dart';
 import '../../core/routes/app_routes.dart';
 import '../main/screens/main_screen.dart';
 
@@ -182,12 +184,7 @@ class _MoreScreenState extends State<MoreScreen> {
             ),
             TextButton(
               onPressed: () {
-                // Handle logout logic here
-                Navigator.pop(context);
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const SplashPage()));
+                context.read<AuthenticationProvider>().logout(context: context);
               },
               child: const Text(
                 'Logout',

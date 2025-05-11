@@ -36,10 +36,12 @@ class AuthRepo extends IAuthRepo {
   @override
   Future<ApiResponse> sendOtp({required String email}) async {
     try {
+      print('send otp request: ${EndPointsConstants.sendOtpUrl}');
       var response = await httpService.postRequest(
         endpoint: EndPointsConstants.sendOtpUrl,
         body: {'email': email},
       );
+
       if (response.statusCode == 200) {
         return ApiResponse.fromJson(jsonDecode(response.body.toString()));
       } else {
