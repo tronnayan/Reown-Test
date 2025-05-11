@@ -65,6 +65,6 @@ class DefaultFirebaseOptions {
     storageBucket: 'peopleapp-3a8ae.firebasestorage.app',
     androidClientId: '224874451784-322qr7ruqg8n7b7v7va6uagi0e3huprr.apps.googleusercontent.com',
     iosClientId: '224874451784-slsi4m5ma56o2frlqgfb928s38ia8983.apps.googleusercontent.com',
-    iosBundleId: 'com.peopleapp.ios.internal',
+    iosBundleId: 'com.peopleapp.ios',
   );
 }

@@ -68,7 +68,7 @@ class ReownProvider extends ChangeNotifier {
 
   Redirect _constructRedirect(bool linkModeEnabled) {
     return Redirect(
-      native: 'wcflutterdapp$_flavor://',
+      native: 'wcflutterdapp://',
       universal: _universalLink(),
       // enable linkMode on Wallet so Dapps can use relay-less connection
       // universal: value must be set on cloud config as well
