@@ -32,13 +32,21 @@ class _SplashPageState extends State<SplashPage> with WidgetsBindingObserver {
     try {
       final authProvider = getIt<AuthenticationProvider>();
       final bool value = await authProvider.checkAuthStatus();
+      // await context.read<ReownProvider>().initializeService(context);
 
       if (mounted) {
         if (value) {
-          NavigationService.navigateOffAll(
-            context,
-            RouteConstants.createTokenScreen,
-          );
+          if (context.read<ReownProvider>().isSessionValid()) {
+            NavigationService.navigateOffAll(
+              context,
+              RouteConstants.mainScreen,
+            );
+          } else {
+            NavigationService.navigateOffAll(
+              context,
+              RouteConstants.createTokenScreen,
+            );
+          }
         } else {
           NavigationService.navigateOffAll(
             context,

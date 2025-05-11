@@ -53,6 +53,8 @@ class WalletBalanceCard extends StatelessWidget {
   final VoidCallback onBuyTapped;
   final VoidCallback onDepositTapped;
   final VoidCallback onWithdrawTapped;
+  final VoidCallback onConnectWalletTapped;
+  final bool isWalletConnected;
 
   const WalletBalanceCard({
     Key? key,
@@ -60,177 +62,246 @@ class WalletBalanceCard extends StatelessWidget {
     required this.onBuyTapped,
     required this.onDepositTapped,
     required this.onWithdrawTapped,
+    required this.isWalletConnected,
+    required this.onConnectWalletTapped,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          margin: const EdgeInsets.all(16),
-          padding:
-              const EdgeInsets.only(left: 24, right: 24, top: 18, bottom: 18),
-          decoration: BoxDecoration(
-            color: ColorConstants.primaryPurple,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Wallet Balance',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                ),
+    return true
+        ? Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: ColorConstants.secondaryBackground,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: ColorConstants.primaryPurple.withOpacity(0.3),
+                width: 1,
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        walletProvider.balance.toStringAsFixed(2),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        walletProvider.currency,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
+            ),
+            child: Column(
+              children: [
+                Image.asset(
+                  'assets/icons/wallet_connect.png',
+                  width: 60,
+                  height: 60,
+                  // If the asset doesn't exist, you can use a placeholder icon
+                  errorBuilder: (context, error, stackTrace) => Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 60,
+                    color: ColorConstants.primaryPurple,
                   ),
-                  const SizedBox(width: 8),
-                  Image.asset(
-                    'assets/icons/people_logo_wallet.png',
-                    width: 32,
-                    height: 32,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Connect Your Wallet',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Connect your wallet to view your balance and make transactions',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                GestureDetector(
+                  onTap: onConnectWalletTapped,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
-                      color: ColorConstants.darkBackground,
+                      color: ColorConstants.primaryPurple,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: GestureDetector(
-                      onTap: onBuyTapped,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Image.asset(
-                            'assets/icons/download_icon.png',
-                            width: 20,
-                            height: 20,
-                            color: Colors.white,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'Connect Wallet',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        : Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.only(
+                    left: 24, right: 24, top: 18, bottom: 18),
+                decoration: BoxDecoration(
+                  color: ColorConstants.primaryPurple,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Wallet Balance',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              walletProvider.balance.toStringAsFixed(2),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 32,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              walletProvider.currency,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                        ),
+                        const SizedBox(width: 8),
+                        Image.asset(
+                          'assets/icons/people_logo_wallet.png',
+                          width: 32,
+                          height: 32,
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: ColorConstants.darkBackground,
+                            borderRadius: BorderRadius.circular(6),
                           ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Buy \$people',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                          child: GestureDetector(
+                            onTap: onBuyTapped,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Image.asset(
+                                  'assets/icons/download_icon.png',
+                                  width: 20,
+                                  height: 20,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Buy \$people',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                    Text(
+                      '=63.00905',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 16,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              Text(
-                '=63.00905',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 16,
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-        Container(
-          margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: onDepositTapped,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      color: ColorConstants.secondaryBackground,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/icons/download_icon.png',
-                          width: 28,
-                          height: 28,
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Deposit',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+              Container(
+                margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: onDepositTapped,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            color: ColorConstants.secondaryBackground,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.asset(
+                                'assets/icons/download_icon.png',
+                                width: 28,
+                                height: 28,
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Deposit',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: GestureDetector(
-                  onTap: onWithdrawTapped,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      color: ColorConstants.secondaryBackground,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/icons/upload_icon.png',
-                          width: 28,
-                          height: 28,
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Withdraw',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: onWithdrawTapped,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            color: ColorConstants.secondaryBackground,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.asset(
+                                'assets/icons/upload_icon.png',
+                                width: 28,
+                                height: 28,
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Withdraw',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ),
+              )
             ],
-          ),
-        )
-      ],
-    );
+          );
   }
 }
 

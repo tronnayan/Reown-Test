@@ -71,6 +71,7 @@ class _OtpBottomSheetState extends State<OtpBottomSheet> {
           Pinput(
             controller: _otpController,
             length: 6,
+            onCompleted: (pin) => widget.onComplete(pin),
             defaultPinTheme: PinTheme(
               width: 56,
               height: 56,
