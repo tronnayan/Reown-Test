@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:peopleapp_flutter/features/auth/providers/reown_provider.dart';
 import 'package:peopleapp_flutter/features/wallet/models/wallet_models.dart';
 import 'package:peopleapp_flutter/features/wallet/provider/wallet_provider.dart';
 import '../../core/widgets/wallet_widgets.dart';
@@ -34,9 +35,9 @@ class _WalletScreenState extends State<WalletScreen>
             onBuyTapped: _showBuyDialog,
             onDepositTapped: _showDepositDialog,
             onWithdrawTapped: _showWithdrawDialog,
-            isWalletConnected: walletProvider.hasWallet,
+            isWalletConnected: context.read<ReownProvider>().isWalletConnected,
             onConnectWalletTapped: () {
-              walletProvider.connectWallet(context: context);
+              context.read<ReownProvider>().connectWallet(context);
             },
           ),
           SocialNetworthCard(

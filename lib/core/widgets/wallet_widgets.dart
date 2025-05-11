@@ -68,7 +68,7 @@ class WalletBalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return true
+    return isWalletConnected
         ? Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(24),

@@ -2,6 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:peopleapp_flutter/core/routes/app_path_constants.dart';
+import 'package:peopleapp_flutter/core/routes/app_routes.dart';
+import 'package:peopleapp_flutter/core/widgets/toast_widget.dart';
 import 'package:peopleapp_flutter/features/auth/models/db/user_wallet_model.dart';
 import 'package:peopleapp_flutter/features/auth/service/wallet_db_service.dart';
 import 'package:peopleapp_flutter/features/main/screens/main_screen.dart';
@@ -741,26 +744,24 @@ class ReownProvider extends ChangeNotifier {
             request: params,
           );
 
-          MethodDialog.show(context, "Creating SPL Token", future);
+          MethodDialog.show(context, "Creating SPL Token", future)
+              .then((value) {
+            Toast.show('Token created successfully!');
+            NavigationService.navigateOffAll(
+              context,
+              RouteConstants.mainScreen,
+            );
+          });
 
-          // Wait for the transaction to complete before showing success message
-          await future;
+          // // Wait for the transaction to complete before showing success message
+          // await future;
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Token created successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-
-          // if (context.mounted) {
-          //   Navigator.pushReplacement(
-          //     context,
-          //     MaterialPageRoute(
-          //       builder: (context) => MainScreen(appKitModal: appKitModal),
-          //     ),
-          //   );
-          // }
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   const SnackBar(
+          //     content: Text('Token created successfully!'),
+          //     backgroundColor: Colors.green,
+          //   ),
+          // );
         } catch (e) {
           print('Transaction signing error: $e');
           throw Exception('Failed to sign transaction: $e');

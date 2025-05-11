@@ -33,10 +33,12 @@ class _SplashPageState extends State<SplashPage> with WidgetsBindingObserver {
       final authProvider = getIt<AuthenticationProvider>();
       final bool value = await authProvider.checkAuthStatus();
       // await context.read<ReownProvider>().initializeService(context);
+      print(
+          'isWalletConnected: ${context.read<ReownProvider>().isWalletConnected} ${context.read<ReownProvider>().isSessionValid()} ${context.read<ReownProvider>().isModalSession}');
 
       if (mounted) {
         if (value) {
-          if (context.read<ReownProvider>().isSessionValid()) {
+          if (await authProvider.checkWalletConnection()) {
             NavigationService.navigateOffAll(
               context,
               RouteConstants.mainScreen,

@@ -20,6 +20,7 @@ import 'package:peopleapp_flutter/core/widgets/toast_widget.dart';
 import 'package:peopleapp_flutter/features/auth/screens/widgets/bottomsheets/auth_bottomseets.dart';
 import 'package:peopleapp_flutter/features/auth/service/google_service.dart';
 import 'package:peopleapp_flutter/features/auth/service/user_db_service.dart';
+import 'package:peopleapp_flutter/features/auth/service/wallet_db_service.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthenticationProvider extends ChangeNotifier {
@@ -248,6 +249,17 @@ class AuthenticationProvider extends ChangeNotifier {
       }
       return isUserLoggedIn;
     } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> checkWalletConnection() async {
+    try {
+      final walletData = HiveService.getWalletData();
+
+      return walletData != null && walletData.walletAddress.isNotEmpty;
+    } catch (e) {
+      print('Error checking wallet connection: $e');
       return false;
     }
   }
