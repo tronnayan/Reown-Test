@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
-import 'package:peopleapp_flutter/features/wallet/provider/wallet_provider.dart';
+import 'package:peopleapp_flutter/features/auth/providers/reown_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../features/wallet/models/wallet_models.dart';
 
@@ -49,7 +49,7 @@ class _CustomPainter extends BoxPainter {
 }
 
 class WalletBalanceCard extends StatelessWidget {
-  final WalletProvider walletProvider;
+  final ReownProvider reownProvider;
   final VoidCallback onBuyTapped;
   final VoidCallback onDepositTapped;
   final VoidCallback onWithdrawTapped;
@@ -58,7 +58,7 @@ class WalletBalanceCard extends StatelessWidget {
 
   const WalletBalanceCard({
     Key? key,
-    required this.walletProvider,
+    required this.reownProvider,
     required this.onBuyTapped,
     required this.onDepositTapped,
     required this.onWithdrawTapped,
@@ -140,7 +140,7 @@ class WalletBalanceCard extends StatelessWidget {
               Container(
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.only(
-                    left: 24, right: 24, top: 18, bottom: 18),
+                    left: 18, right: 18, top: 18, bottom: 18),
                 decoration: BoxDecoration(
                   color: ColorConstants.primaryPurple,
                   borderRadius: BorderRadius.circular(6),
@@ -161,7 +161,7 @@ class WalletBalanceCard extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              walletProvider.balance.toStringAsFixed(2),
+                              reownProvider.walletBalance.toStringAsFixed(2),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 32,
@@ -170,7 +170,7 @@ class WalletBalanceCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              walletProvider.currency,
+                              'SOL',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -180,7 +180,7 @@ class WalletBalanceCard extends StatelessWidget {
                             const SizedBox(width: 8),
                           ],
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 4),
                         Image.asset(
                           'assets/icons/people_logo_wallet.png',
                           width: 32,
@@ -189,7 +189,7 @@ class WalletBalanceCard extends StatelessWidget {
                         const Spacer(),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
+                              horizontal: 8, vertical: 8),
                           decoration: BoxDecoration(
                             color: ColorConstants.darkBackground,
                             borderRadius: BorderRadius.circular(6),
@@ -201,8 +201,8 @@ class WalletBalanceCard extends StatelessWidget {
                               children: [
                                 Image.asset(
                                   'assets/icons/download_icon.png',
-                                  width: 20,
-                                  height: 20,
+                                  width: 16,
+                                  height: 16,
                                   color: Colors.white,
                                 ),
                                 const SizedBox(width: 8),
@@ -210,7 +210,7 @@ class WalletBalanceCard extends StatelessWidget {
                                   'Buy \$people',
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 16,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -349,12 +349,12 @@ class _ActionButton extends StatelessWidget {
 }
 
 class SocialNetworthCard extends StatelessWidget {
-  final WalletProvider walletProvider;
+  final ReownProvider reownProvider;
   final double percentageChange;
 
   const SocialNetworthCard({
     Key? key,
-    required this.walletProvider,
+    required this.reownProvider,
     required this.percentageChange,
   }) : super(key: key);
 

@@ -20,7 +20,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<DashboardProvider>().initializeWallet();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      context.read<DashboardProvider>().initializeWallet();
+    });
   }
 
   @override

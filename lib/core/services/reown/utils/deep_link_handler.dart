@@ -1,17 +1,23 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:reown_appkit/modal/i_appkit_modal_impl.dart';
 
 class DeepLinkHandler {
-  static const _methodChannel = MethodChannel('com.peopleapp.ios/methods');
-    // Platform.isAndroid
-    //     ? 'com.peopleapp.android/methods'
-    //     : 'com.peopleapp.ios/methods',
+  static MethodChannel _methodChannel = MethodChannel(Platform.isAndroid
+      ? 'com.peopleapp.android/methods'
+      : 'com.peopleapp.ios/methods');
+  // Platform.isAndroid
+  //     ? 'com.peopleapp.android/methods'
+  //     : 'com.peopleapp.ios/methods',
   // );
-  static const _eventChannel = EventChannel('com.peopleapp.ios/events');
-    // Platform.isAndroid
-    //     ? 'com.peopleapp.android/events'
-    //     : 'com.peopleapp.ios/events',
+  static EventChannel _eventChannel = EventChannel(Platform.isAndroid
+      ? 'com.peopleapp.android/events'
+      : 'com.peopleapp.ios/events');
+  // Platform.isAndroid
+  //     ? 'com.peopleapp.android/events'
+  //     : 'com.peopleapp.ios/events',
   // );
   static final waiting = ValueNotifier<bool>(false);
   static late IReownAppKitModal _appKitModal;

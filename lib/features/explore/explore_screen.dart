@@ -284,15 +284,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        name,
+                        name.length > 10 ? name.substring(0, 8) + '...' : name,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
                         style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            overflow: TextOverflow.ellipsis),
                       ),
                       Text(
                         handle,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0x60FFFFFF),
                           fontSize: 12,

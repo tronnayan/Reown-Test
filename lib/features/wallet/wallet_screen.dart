@@ -27,21 +27,21 @@ class _WalletScreenState extends State<WalletScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<WalletProvider>(builder: (context, walletProvider, child) {
+    return Consumer<ReownProvider>(builder: (context, reownProvider, child) {
       return Column(
         children: [
           WalletBalanceCard(
-            walletProvider: walletProvider,
+            reownProvider: reownProvider,
             onBuyTapped: _showBuyDialog,
             onDepositTapped: _showDepositDialog,
             onWithdrawTapped: _showWithdrawDialog,
-            isWalletConnected: context.read<ReownProvider>().isWalletConnected,
+            isWalletConnected: reownProvider.isWalletConnected,
             onConnectWalletTapped: () {
-              context.read<ReownProvider>().connectWallet(context);
+              reownProvider.connectWallet(context);
             },
           ),
           SocialNetworthCard(
-            walletProvider: walletProvider,
+            reownProvider: reownProvider,
             percentageChange: 0.11,
           ),
           const SizedBox(height: 20),
