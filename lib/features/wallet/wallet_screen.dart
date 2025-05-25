@@ -107,7 +107,7 @@ class _WalletScreenState extends State<WalletScreen>
               ),
               SizedBox(height: 16),
               Text(
-                'Initializing wallet...',
+                'Fetching wallet...',
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 16,

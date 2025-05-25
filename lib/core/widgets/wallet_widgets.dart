@@ -220,13 +220,13 @@ class WalletBalanceCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    Text(
-                      '=63.00905',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 16,
-                      ),
-                    ),
+                    // Text(
+                    //   '=63.00905',
+                    //   style: TextStyle(
+                    //     color: Colors.white.withOpacity(0.7),
+                    //     fontSize: 16,
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
@@ -383,7 +383,7 @@ class SocialNetworthCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     const Text(
-                      'Social Networth',
+                      'Portfolio Value',
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 14,
@@ -392,13 +392,19 @@ class SocialNetworthCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '\$${00.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                FutureBuilder<double>(
+                  future: reownProvider.calculateTotalPortfolioValue(),
+                  builder: (context, snapshot) {
+                    final totalValue = snapshot.data ?? 0.0;
+                    return Text(
+                      '\$${totalValue.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
                 ),
                 Row(
                   children: [

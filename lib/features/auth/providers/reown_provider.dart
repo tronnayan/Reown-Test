@@ -35,6 +35,10 @@ class ReownProvider extends ChangeNotifier {
   double walletBalance = 0.0;
   bool isWalletConnected = false;
   bool _isLoading = false;
+  
+  // Cache for token metadata to avoid repeated API calls
+  final Map<String, Map<String, dynamic>> _tokenMetadataCache = {};
+  List<dynamic>? _jupiterTokenList;
 
   bool get isLoading => _isLoading;
 
@@ -579,7 +583,8 @@ class ReownProvider extends ChangeNotifier {
 
       List<Map<String, dynamic>> tokens = [];
 
-      // Add SOL as the first token
+      // Add SOL as the first token with price
+      final solPrice = await _getTokenPrice('solana');
       tokens.add({
         'name': 'Solana',
         'symbol': 'SOL',
@@ -587,8 +592,9 @@ class ReownProvider extends ChangeNotifier {
         'decimals': 9,
         'mint': 'So11111111111111111111111111111111111111112', // SOL mint address
         'imageUrl': 'https://cryptologos.cc/logos/solana-sol-logo.png',
-        'price': 0.0, // You can fetch real price from an API
+        'price': solPrice,
         'priceChange': 0.0,
+        'usdValue': walletBalance * solPrice,
       });
 
       // Fetch SPL tokens using RPC call
@@ -616,21 +622,30 @@ class ReownProvider extends ChangeNotifier {
                final balance = double.parse(tokenAmount['amount']) / 
                               (math.pow(10, decimals));
               
-              if (balance > 0) {
-                // Try to get token metadata
-                final tokenMetadata = await _getTokenMetadata(rpcUrl, mint);
-                
-                                 tokens.add({
+                             if (balance > 0) {
+                 // Try to get token metadata
+                 final tokenMetadata = await _getTokenMetadata(rpcUrl, mint);
+                 
+                 // Try to get price for known tokens
+                 double tokenPrice = 0.0;
+                 final symbol = tokenMetadata['symbol'] ?? '';
+                 if (symbol.toLowerCase() == 'usdc' || symbol.toLowerCase() == 'usdt') {
+                   tokenPrice = 1.0; // Stablecoins
+                 }
+                 // For other tokens, we could add more price lookups here
+                 
+                 tokens.add({
                    'name': _formatTokenName(tokenMetadata['name'] ?? 'Unknown Token'),
                    'symbol': _formatTokenSymbol(tokenMetadata['symbol'] ?? mint.substring(0, 4)),
                    'balance': balance,
                    'decimals': tokenAmount['decimals'] ?? 9,
                    'mint': mint,
                    'imageUrl': tokenMetadata['image'] ?? 'assets/default_user.png',
-                   'price': 0.0,
+                   'price': tokenPrice,
                    'priceChange': 0.0,
+                   'usdValue': balance * tokenPrice,
                  });
-              }
+               }
             } catch (e) {
               debugPrint('[ReownProvider] Error parsing token account: $e');
             }
@@ -674,15 +689,25 @@ class ReownProvider extends ChangeNotifier {
   // Helper method to get token metadata
   Future<Map<String, dynamic>> _getTokenMetadata(String rpcUrl, String mint) async {
     try {
-      // Try to get metadata account
-      final metadataSeeds = [
-        'metadata',
-        'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s', // Metadata program ID
-        mint,
-      ];
-      
-      // For now, return basic info. In a real implementation, you'd derive the metadata PDA
-      // and fetch the actual metadata
+      // Check for well-known tokens first
+      final knownToken = _getKnownTokenMetadata(mint);
+      if (knownToken != null) {
+        return knownToken;
+      }
+
+      // Try to get metadata from Jupiter API (popular token list)
+      final jupiterMetadata = await _getJupiterTokenMetadata(mint);
+      if (jupiterMetadata != null) {
+        return jupiterMetadata;
+      }
+
+      // Fallback: Try to get metadata from Solana metadata program
+      final metadataAccount = await _getMetadataAccount(rpcUrl, mint);
+      if (metadataAccount != null) {
+        return metadataAccount;
+      }
+
+      // Final fallback: Use mint address info
       return {
         'name': 'Token ${mint.substring(0, 8)}',
         'symbol': mint.substring(0, 4).toUpperCase(),
@@ -698,6 +723,95 @@ class ReownProvider extends ChangeNotifier {
     }
   }
 
+  // Get metadata for well-known tokens
+  Map<String, dynamic>? _getKnownTokenMetadata(String mint) {
+    final knownTokens = {
+      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': {
+        'name': 'USD Coin',
+        'symbol': 'USDC',
+        'image': 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+      },
+      'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': {
+        'name': 'Tether USD',
+        'symbol': 'USDT',
+        'image': 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.svg',
+      },
+      'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So': {
+        'name': 'Marinade staked SOL',
+        'symbol': 'mSOL',
+        'image': 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png',
+      },
+      'So11111111111111111111111111111111111111112': {
+        'name': 'Wrapped SOL',
+        'symbol': 'SOL',
+        'image': 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
+      },
+    };
+
+    return knownTokens[mint];
+  }
+
+  // Get token metadata from Jupiter API (most comprehensive token list)
+  Future<Map<String, dynamic>?> _getJupiterTokenMetadata(String mint) async {
+    try {
+      // Check cache first
+      if (_tokenMetadataCache.containsKey(mint)) {
+        return _tokenMetadataCache[mint];
+      }
+
+      // Load Jupiter token list if not already loaded
+      if (_jupiterTokenList == null) {
+        final response = await http.get(
+          Uri.parse('https://token.jup.ag/strict'),
+          headers: {'Accept': 'application/json'},
+        );
+
+        if (response.statusCode == 200) {
+          _jupiterTokenList = jsonDecode(response.body) as List;
+        } else {
+          return null;
+        }
+      }
+
+      // Find token in the list
+      final tokenInfo = _jupiterTokenList!.firstWhere(
+        (token) => token['address'] == mint,
+        orElse: () => null,
+      );
+
+      if (tokenInfo != null) {
+        final metadata = {
+          'name': tokenInfo['name'] ?? 'Unknown Token',
+          'symbol': tokenInfo['symbol'] ?? mint.substring(0, 4).toUpperCase(),
+          'image': tokenInfo['logoURI'] ?? 'assets/default_user.png',
+        };
+        
+        // Cache the result
+        _tokenMetadataCache[mint] = metadata;
+        return metadata;
+      }
+    } catch (e) {
+      debugPrint('[ReownProvider] Error fetching Jupiter metadata: $e');
+    }
+    return null;
+  }
+
+  // Get metadata from Solana metadata program
+  Future<Map<String, dynamic>?> _getMetadataAccount(String rpcUrl, String mint) async {
+    try {
+      // Calculate metadata PDA
+      final metadataProgramId = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s';
+      
+      // For now, we'll use a simplified approach
+      // In a full implementation, you'd need to derive the PDA properly
+      
+      return null; // Will implement if Jupiter API doesn't work
+    } catch (e) {
+      debugPrint('[ReownProvider] Error fetching metadata account: $e');
+      return null;
+    }
+  }
+
   // Helper method to format token names
   String _formatTokenName(String name) {
     if (name.length <= 20) return name;
@@ -708,6 +822,42 @@ class ReownProvider extends ChangeNotifier {
   String _formatTokenSymbol(String symbol) {
     if (symbol.length <= 8) return symbol.toUpperCase();
     return symbol.substring(0, 8).toUpperCase();
+  }
+
+  // Get token price from CoinGecko API
+  Future<double> _getTokenPrice(String tokenId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://api.coingecko.com/api/v3/simple/price?ids=$tokenId&vs_currencies=usd'),
+        headers: {'Accept': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return (data[tokenId]?['usd'] as num?)?.toDouble() ?? 0.0;
+      }
+    } catch (e) {
+      debugPrint('[ReownProvider] Error fetching token price: $e');
+    }
+    return 0.0;
+  }
+
+  // Calculate total portfolio value in USD
+  Future<double> calculateTotalPortfolioValue() async {
+    try {
+      final tokens = await fetchWalletTokens();
+      double totalValue = 0.0;
+      
+      for (final token in tokens) {
+        final usdValue = token['usdValue'] as double? ?? 0.0;
+        totalValue += usdValue;
+      }
+      
+      return totalValue;
+    } catch (e) {
+      debugPrint('[ReownProvider] Error calculating portfolio value: $e');
+      return 0.0;
+    }
   }
 
   void _onModalUpdate(ModalConnect? event) {
