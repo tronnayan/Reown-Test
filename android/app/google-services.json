@@ -7,26 +7,18 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:224874451784:android:6e068b50b5285b1802997d",
+        "mobilesdk_app_id": "1:224874451784:android:8d3e91af3f42ed6102997d",
         "android_client_info": {
           "package_name": "com.peopleapp.android"
         }
       },
       "oauth_client": [
         {
-          "client_id": "224874451784-322qr7ruqg8n7b7v7va6uagi0e3huprr.apps.googleusercontent.com",
+          "client_id": "224874451784-jmkvt4v2n2753fq499pqlsrc2lsqh63d.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.peopleapp.android",
-            "certificate_hash": "804e48b021b31d3a55db6aa606de24057553a59d"
-          }
-        },
-        {
-          "client_id": "224874451784-kvmquqnq0958ir2o4u1b07f281r921jf.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.peopleapp.android",
-            "certificate_hash": "321875bb6dd37cddb6aa8e04993811d97ceb5153"
+            "certificate_hash": "5d632ba55a1fce88da16110c19f361689e0f0e2d"
           }
         },
         {
@@ -50,7 +42,7 @@
               "client_id": "224874451784-slsi4m5ma56o2frlqgfb928s38ia8983.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.peopleapp.ios"
+                "bundle_id": "com.peopleapp.ios.internal"
               }
             }
           ]
