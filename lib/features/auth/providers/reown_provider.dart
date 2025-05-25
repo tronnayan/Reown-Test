@@ -591,7 +591,7 @@ class ReownProvider extends ChangeNotifier {
         'balance': walletBalance,
         'decimals': 9,
         'mint': 'So11111111111111111111111111111111111111112', // SOL mint address
-        'imageUrl': 'https://cryptologos.cc/logos/solana-sol-logo.png',
+        'imageUrl': 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
         'price': solPrice,
         'priceChange': 0.0,
         'usdValue': walletBalance * solPrice,

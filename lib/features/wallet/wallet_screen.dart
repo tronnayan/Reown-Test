@@ -15,16 +15,26 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late TabController _tabController;
   List<Token> _walletTokens = [];
   bool _isLoadingTokens = false;
   bool _isInitializing = true;
+  bool _hasInitialized = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _initializeWallet();
+  }
+
+  Future<void> _initializeWallet() async {
+    if (_hasInitialized) return;
+    
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final reownProvider = context.read<ReownProvider>();
       
@@ -48,6 +58,7 @@ class _WalletScreenState extends State<WalletScreen>
       if (mounted) {
         setState(() {
           _isInitializing = false;
+          _hasInitialized = true;
         });
       }
     });
@@ -86,15 +97,24 @@ class _WalletScreenState extends State<WalletScreen>
     }
   }
 
+  Future<void> _refreshWallet() async {
+    setState(() {
+      _walletTokens.clear();
+      _hasInitialized = false;
+      _isInitializing = true;
+    });
+    await _initializeWallet();
+  }
+
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    
     return Consumer<ReownProvider>(builder: (context, reownProvider, child) {
-      // Fetch tokens when wallet connection status changes
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_isInitializing && reownProvider.isWalletConnected && _walletTokens.isEmpty && !_isLoadingTokens) {
-          _fetchWalletTokens();
-        }
-      });
+      // Only fetch tokens if we haven't initialized and wallet is connected
+      if (!_hasInitialized && !_isInitializing) {
+        _initializeWallet();
+      }
 
       // Show loading state during initialization
       if (_isInitializing) {
@@ -140,7 +160,7 @@ class _WalletScreenState extends State<WalletScreen>
             tokens: _getTokens(),
             nfts: _getNFTs(),
             isLoadingTokens: _isLoadingTokens,
-            onRefresh: () => _fetchWalletTokens(),
+            onRefresh: _refreshWallet,
           ),
           const SizedBox(height: 20),
         ],

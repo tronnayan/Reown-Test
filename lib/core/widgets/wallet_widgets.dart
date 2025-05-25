@@ -642,19 +642,90 @@ class AssetsTabView extends StatelessWidget {
                             children: [
                               CircleAvatar(
                                 radius: 20,
-                                backgroundImage: token.imageUrl.startsWith('http')
-                                    ? NetworkImage(token.imageUrl)
-                                    : AssetImage(token.imageUrl) as ImageProvider,
                                 backgroundColor: Colors.grey[800],
-                                child: token.imageUrl.startsWith('http') || token.imageUrl.startsWith('assets')
-                                    ? null
-                                    : Text(
-                                        token.symbol.substring(0, 1),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
+                                child: token.imageUrl.startsWith('http')
+                                    ? ClipOval(
+                                        child: Image.network(
+                                          token.imageUrl,
+                                          width: 40,
+                                          height: 40,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              width: 40,
+                                              height: 40,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[800],
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  token.symbol.isNotEmpty 
+                                                      ? token.symbol.substring(0, 1).toUpperCase()
+                                                      : '?',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Container(
+                                              width: 40,
+                                              height: 40,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[800],
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Center(
+                                                child: SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    color: Colors.white54,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
                                         ),
-                                      ),
+                                      )
+                                    : token.imageUrl.startsWith('assets')
+                                        ? ClipOval(
+                                            child: Image.asset(
+                                              token.imageUrl,
+                                              width: 40,
+                                              height: 40,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Text(
+                                                  token.symbol.isNotEmpty 
+                                                      ? token.symbol.substring(0, 1).toUpperCase()
+                                                      : '?',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          )
+                                        : Text(
+                                            token.symbol.isNotEmpty 
+                                                ? token.symbol.substring(0, 1).toUpperCase()
+                                                : '?',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
