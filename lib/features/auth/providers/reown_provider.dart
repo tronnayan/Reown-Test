@@ -1,7 +1,9 @@
 import 'dart:math';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:peopleapp_flutter/core/routes/app_path_constants.dart';
 import 'package:peopleapp_flutter/core/routes/app_routes.dart';
 import 'package:peopleapp_flutter/core/widgets/toast_widget.dart';
@@ -143,8 +145,42 @@ class ReownProvider extends ChangeNotifier {
     await _registerEventHandlers();
     DeepLinkHandler.init(appKitModal!);
     DeepLinkHandler.checkInitialLink();
+    
+    // Check if there's an existing session and restore wallet state
+    await _checkAndRestoreSession();
+    
     setIsLoading(false);
     notifyListeners();
+  }
+
+  Future<void> _checkAndRestoreSession() async {
+    try {
+      // Check if there's an existing session
+      if (appKitModal?.session != null && appKitModal?.selectedChain != null) {
+        final chainId = appKitModal!.selectedChain!.chainId;
+        final namespace = NamespaceUtils.getNamespaceFromChain(chainId);
+        final address = appKitModal!.session!.getAddress(namespace);
+        
+        if (address != null) {
+          _connectionStatus = ConnectionStatus.connected;
+          walletAddress = address;
+          isWalletConnected = true;
+          
+          debugPrint('[ReownProvider] Restored session - Address: $address');
+          
+          // Try to fetch the current balance
+          try {
+            await fetchWalletBalance(address, chainId, namespace);
+          } catch (e) {
+            debugPrint('[ReownProvider] Error fetching balance during restore: $e');
+          }
+          
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('[ReownProvider] Error restoring session: $e');
+    }
   }
 
   void _logListener(String event) {
@@ -524,6 +560,154 @@ class ReownProvider extends ChangeNotifier {
       walletBalance = 0.0;
       notifyListeners();
     }
+  }
+
+  // Method to fetch SPL tokens from the connected wallet
+  Future<List<Map<String, dynamic>>> fetchWalletTokens() async {
+    if (!isWalletConnected || appKitModal?.session == null || appKitModal?.selectedChain == null) {
+      return [];
+    }
+
+    try {
+      final chainId = appKitModal!.selectedChain!.chainId;
+      final namespace = NamespaceUtils.getNamespaceFromChain(chainId);
+      final address = appKitModal!.session!.getAddress(namespace);
+
+      if (address == null || namespace != 'solana') {
+        return [];
+      }
+
+      List<Map<String, dynamic>> tokens = [];
+
+      // Add SOL as the first token
+      tokens.add({
+        'name': 'Solana',
+        'symbol': 'SOL',
+        'balance': walletBalance,
+        'decimals': 9,
+        'mint': 'So11111111111111111111111111111111111111112', // SOL mint address
+        'imageUrl': 'https://cryptologos.cc/logos/solana-sol-logo.png',
+        'price': 0.0, // You can fetch real price from an API
+        'priceChange': 0.0,
+      });
+
+      // Fetch SPL tokens using RPC call
+      try {
+        final rpcUrl = appKitModal!.selectedChain!.rpcUrl;
+        final response = await _makeRpcCall(rpcUrl, 'getTokenAccountsByOwner', [
+          address,
+          {
+            'programId': 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
+          },
+          {
+            'encoding': 'jsonParsed'
+          }
+        ]);
+
+        if (response != null && response['result'] != null && response['result']['value'] != null) {
+          final tokenAccounts = response['result']['value'] as List;
+          
+          for (final tokenAccount in tokenAccounts) {
+            try {
+                             final accountData = tokenAccount['account']['data']['parsed']['info'];
+               final tokenAmount = accountData['tokenAmount'];
+               final mint = accountData['mint'];
+               final decimals = tokenAmount['decimals'] ?? 9;
+               final balance = double.parse(tokenAmount['amount']) / 
+                              (math.pow(10, decimals));
+              
+              if (balance > 0) {
+                // Try to get token metadata
+                final tokenMetadata = await _getTokenMetadata(rpcUrl, mint);
+                
+                                 tokens.add({
+                   'name': _formatTokenName(tokenMetadata['name'] ?? 'Unknown Token'),
+                   'symbol': _formatTokenSymbol(tokenMetadata['symbol'] ?? mint.substring(0, 4)),
+                   'balance': balance,
+                   'decimals': tokenAmount['decimals'] ?? 9,
+                   'mint': mint,
+                   'imageUrl': tokenMetadata['image'] ?? 'assets/default_user.png',
+                   'price': 0.0,
+                   'priceChange': 0.0,
+                 });
+              }
+            } catch (e) {
+              debugPrint('[ReownProvider] Error parsing token account: $e');
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[ReownProvider] Error fetching SPL tokens: $e');
+      }
+
+      debugPrint('[ReownProvider] Found ${tokens.length} tokens');
+      return tokens;
+    } catch (e) {
+      debugPrint('[ReownProvider] Error fetching wallet tokens: $e');
+      return [];
+    }
+  }
+
+  // Helper method to make RPC calls
+  Future<Map<String, dynamic>?> _makeRpcCall(String rpcUrl, String method, List params) async {
+    try {
+      final response = await http.post(
+        Uri.parse(rpcUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'id': 1,
+          'method': method,
+          'params': params,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('[ReownProvider] RPC call error: $e');
+    }
+    return null;
+  }
+
+  // Helper method to get token metadata
+  Future<Map<String, dynamic>> _getTokenMetadata(String rpcUrl, String mint) async {
+    try {
+      // Try to get metadata account
+      final metadataSeeds = [
+        'metadata',
+        'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s', // Metadata program ID
+        mint,
+      ];
+      
+      // For now, return basic info. In a real implementation, you'd derive the metadata PDA
+      // and fetch the actual metadata
+      return {
+        'name': 'Token ${mint.substring(0, 8)}',
+        'symbol': mint.substring(0, 4).toUpperCase(),
+        'image': 'assets/default_user.png',
+      };
+    } catch (e) {
+      debugPrint('[ReownProvider] Error fetching token metadata: $e');
+      return {
+        'name': 'Unknown Token',
+        'symbol': mint.substring(0, 4).toUpperCase(),
+        'image': 'assets/default_user.png',
+      };
+    }
+  }
+
+  // Helper method to format token names
+  String _formatTokenName(String name) {
+    if (name.length <= 20) return name;
+    return '${name.substring(0, 17)}...';
+  }
+
+  // Helper method to format token symbols
+  String _formatTokenSymbol(String symbol) {
+    if (symbol.length <= 8) return symbol.toUpperCase();
+    return symbol.substring(0, 8).toUpperCase();
   }
 
   void _onModalUpdate(ModalConnect? event) {

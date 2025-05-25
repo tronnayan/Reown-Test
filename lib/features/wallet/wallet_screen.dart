@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:peopleapp_flutter/core/constants/color_constants.dart';
 import 'package:peopleapp_flutter/features/auth/providers/reown_provider.dart';
 import 'package:peopleapp_flutter/features/wallet/models/wallet_models.dart';
 import 'package:peopleapp_flutter/features/wallet/provider/wallet_provider.dart';
@@ -16,18 +17,107 @@ class WalletScreen extends StatefulWidget {
 class _WalletScreenState extends State<WalletScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  List<Token> _walletTokens = [];
+  bool _isLoadingTokens = false;
+  bool _isInitializing = true;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final reownProvider = context.read<ReownProvider>();
+      
+      // Initialize ReownProvider if not already initialized
+      if (!reownProvider.isInitialized) {
+        await reownProvider.initializeService(context);
+      }
+      
+      // Initialize WalletProvider
       context.read<WalletProvider>().initializeWallet();
+      
+      // Wait a bit for wallet connection to be properly established
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Fetch wallet tokens if connected
+      if (reownProvider.isWalletConnected) {
+        await _fetchWalletTokens();
+      }
+      
+      // Set initialization complete
+      if (mounted) {
+        setState(() {
+          _isInitializing = false;
+        });
+      }
     });
+  }
+
+  Future<void> _fetchWalletTokens() async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoadingTokens = true;
+    });
+
+    try {
+      final reownProvider = context.read<ReownProvider>();
+      final tokenData = await reownProvider.fetchWalletTokens();
+      
+      if (mounted) {
+        setState(() {
+          _walletTokens = tokenData.map((tokenMap) => Token(
+            name: tokenMap['name'] as String,
+            symbol: tokenMap['symbol'] as String,
+            price: (tokenMap['balance'] as double),
+            priceChange: (tokenMap['priceChange'] as double),
+            imageUrl: tokenMap['imageUrl'] as String,
+          )).toList();
+          _isLoadingTokens = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[WalletScreen] Error fetching tokens: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingTokens = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ReownProvider>(builder: (context, reownProvider, child) {
+      // Fetch tokens when wallet connection status changes
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_isInitializing && reownProvider.isWalletConnected && _walletTokens.isEmpty && !_isLoadingTokens) {
+          _fetchWalletTokens();
+        }
+      });
+
+      // Show loading state during initialization
+      if (_isInitializing) {
+        return const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                color: ColorConstants.primaryPurple,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Initializing wallet...',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
       return Column(
         children: [
           WalletBalanceCard(
@@ -49,6 +139,8 @@ class _WalletScreenState extends State<WalletScreen>
             tabController: _tabController,
             tokens: _getTokens(),
             nfts: _getNFTs(),
+            isLoadingTokens: _isLoadingTokens,
+            onRefresh: () => _fetchWalletTokens(),
           ),
           const SizedBox(height: 20),
         ],
@@ -57,43 +149,12 @@ class _WalletScreenState extends State<WalletScreen>
   }
 
   List<Token> _getTokens() {
-    return [
-      Token(
-        name: 'Sofia Santos',
-        symbol: '\$sofia',
-        price: 331.89,
-        priceChange: 0.11,
-        imageUrl: 'assets/default_user.png',
-      ),
-      Token(
-        name: 'Lila Patel',
-        symbol: '\$lila',
-        price: 331.89,
-        priceChange: 0.11,
-        imageUrl: 'assets/default_user.png',
-      ),
-      Token(
-        name: 'Ethan Nguyen',
-        symbol: '\$ethan',
-        price: 331.89,
-        priceChange: -2.04,
-        imageUrl: 'assets/default_user.png',
-      ),
-      Token(
-        name: 'Ethan Nguyen',
-        symbol: '\$ethan',
-        price: 331.89,
-        priceChange: -2.04,
-        imageUrl: 'assets/default_user.png',
-      ),
-      Token(
-        name: 'Ethan Nguyen',
-        symbol: '\$ethan',
-        price: 331.89,
-        priceChange: -2.04,
-        imageUrl: 'assets/default_user.png',
-      ),
-    ];
+    if (_walletTokens.isNotEmpty) {
+      return _walletTokens;
+    }
+    
+    // Return empty list if no tokens loaded yet
+    return [];
   }
 
   List<NFT> _getNFTs() {
