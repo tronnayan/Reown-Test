@@ -14,6 +14,7 @@ import 'package:peopleapp_flutter/features/auth/models/requests/login_request.da
 import 'package:peopleapp_flutter/features/auth/models/responses/auth_response.dart';
 import 'package:peopleapp_flutter/features/auth/models/responses/general_response.dart';
 import 'package:peopleapp_flutter/features/auth/models/responses/user_response.dart';
+import 'package:peopleapp_flutter/features/auth/providers/reown_provider.dart';
 import 'package:peopleapp_flutter/features/auth/repo/auth_repo.dart';
 import 'package:peopleapp_flutter/core/services/get_it_service.dart';
 import 'package:peopleapp_flutter/core/widgets/toast_widget.dart';
@@ -269,6 +270,7 @@ class AuthenticationProvider extends ChangeNotifier {
   void logout({required BuildContext context}) {
     FirebaseAuth.instance.signOut();
     UserDbService.clearUserData();
+
     NavigationService.navigateOffAll(
       context,
       RouteConstants.welcomeScreen,

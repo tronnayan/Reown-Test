@@ -38,17 +38,17 @@ class _SplashPageState extends State<SplashPage> with WidgetsBindingObserver {
 
       if (mounted) {
         if (value) {
-          if (await authProvider.checkWalletConnection()) {
-            NavigationService.navigateOffAll(
-              context,
-              RouteConstants.mainScreen,
-            );
-          } else {
-            NavigationService.navigateOffAll(
-              context,
-              RouteConstants.createTokenScreen,
-            );
-          }
+          // if (await authProvider.checkWalletConnection()) {
+          NavigationService.navigateOffAll(
+            context,
+            RouteConstants.mainScreen,
+          );
+          // } else {
+          //   NavigationService.navigateOffAll(
+          //     context,
+          //     RouteConstants.createTokenScreen,
+          //   );
+          // }
         } else {
           NavigationService.navigateOffAll(
             context,
