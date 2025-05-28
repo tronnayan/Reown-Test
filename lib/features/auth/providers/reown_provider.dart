@@ -1,7 +1,9 @@
 import 'dart:math';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:peopleapp_flutter/core/routes/app_path_constants.dart';
 import 'package:peopleapp_flutter/core/routes/app_routes.dart';
 import 'package:peopleapp_flutter/core/widgets/toast_widget.dart';
@@ -33,6 +35,10 @@ class ReownProvider extends ChangeNotifier {
   double walletBalance = 0.0;
   bool isWalletConnected = false;
   bool _isLoading = false;
+
+  // Cache for token metadata to avoid repeated API calls
+  final Map<String, Map<String, dynamic>> _tokenMetadataCache = {};
+  List<dynamic>? _jupiterTokenList;
 
   bool get isLoading => _isLoading;
 
@@ -143,8 +149,43 @@ class ReownProvider extends ChangeNotifier {
     await _registerEventHandlers();
     DeepLinkHandler.init(appKitModal!);
     DeepLinkHandler.checkInitialLink();
+
+    // Check if there's an existing session and restore wallet state
+    await _checkAndRestoreSession();
+
     setIsLoading(false);
     notifyListeners();
+  }
+
+  Future<void> _checkAndRestoreSession() async {
+    try {
+      // Check if there's an existing session
+      if (appKitModal?.session != null && appKitModal?.selectedChain != null) {
+        final chainId = appKitModal!.selectedChain!.chainId;
+        final namespace = NamespaceUtils.getNamespaceFromChain(chainId);
+        final address = appKitModal!.session!.getAddress(namespace);
+
+        if (address != null) {
+          _connectionStatus = ConnectionStatus.connected;
+          walletAddress = address;
+          isWalletConnected = true;
+
+          debugPrint('[ReownProvider] Restored session - Address: $address');
+
+          // Try to fetch the current balance
+          try {
+            await fetchWalletBalance(address, chainId, namespace);
+          } catch (e) {
+            debugPrint(
+                '[ReownProvider] Error fetching balance during restore: $e');
+          }
+
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('[ReownProvider] Error restoring session: $e');
+    }
   }
 
   void _logListener(String event) {
@@ -526,6 +567,315 @@ class ReownProvider extends ChangeNotifier {
     }
   }
 
+  // Method to fetch SPL tokens from the connected wallet
+  Future<List<Map<String, dynamic>>> fetchWalletTokens() async {
+    if (!isWalletConnected ||
+        appKitModal?.session == null ||
+        appKitModal?.selectedChain == null) {
+      return [];
+    }
+
+    try {
+      final chainId = appKitModal!.selectedChain!.chainId;
+      final namespace = NamespaceUtils.getNamespaceFromChain(chainId);
+      final address = appKitModal!.session!.getAddress(namespace);
+
+      if (address == null || namespace != 'solana') {
+        return [];
+      }
+
+      List<Map<String, dynamic>> tokens = [];
+
+      // Add SOL as the first token with price
+      final solPrice = await _getTokenPrice('solana');
+      tokens.add({
+        'name': 'Solana',
+        'symbol': 'SOL',
+        'balance': walletBalance,
+        'decimals': 9,
+        'mint':
+            'So11111111111111111111111111111111111111112', // SOL mint address
+        'imageUrl':
+            'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
+        'price': solPrice,
+        'priceChange': 0.0,
+        'usdValue': walletBalance * solPrice,
+      });
+
+      // Fetch SPL tokens using RPC call
+      try {
+        final rpcUrl = appKitModal!.selectedChain!.rpcUrl;
+        final response = await _makeRpcCall(rpcUrl, 'getTokenAccountsByOwner', [
+          address,
+          {'programId': 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'},
+          {'encoding': 'jsonParsed'}
+        ]);
+
+        if (response != null &&
+            response['result'] != null &&
+            response['result']['value'] != null) {
+          final tokenAccounts = response['result']['value'] as List;
+
+          for (final tokenAccount in tokenAccounts) {
+            try {
+              final accountData =
+                  tokenAccount['account']['data']['parsed']['info'];
+              final tokenAmount = accountData['tokenAmount'];
+              final mint = accountData['mint'];
+              final decimals = tokenAmount['decimals'] ?? 9;
+              final balance = double.parse(tokenAmount['amount']) /
+                  (math.pow(10, decimals));
+
+              if (balance > 0) {
+                // Try to get token metadata
+                final tokenMetadata = await _getTokenMetadata(rpcUrl, mint);
+
+                // Try to get price for known tokens
+                double tokenPrice = 0.0;
+                final symbol = tokenMetadata['symbol'] ?? '';
+                if (symbol.toLowerCase() == 'usdc' ||
+                    symbol.toLowerCase() == 'usdt') {
+                  tokenPrice = 1.0; // Stablecoins
+                }
+                // For other tokens, we could add more price lookups here
+
+                tokens.add({
+                  'name': _formatTokenName(
+                      tokenMetadata['name'] ?? 'Unknown Token'),
+                  'symbol': _formatTokenSymbol(
+                      tokenMetadata['symbol'] ?? mint.substring(0, 4)),
+                  'balance': balance,
+                  'decimals': tokenAmount['decimals'] ?? 9,
+                  'mint': mint,
+                  'imageUrl':
+                      tokenMetadata['image'] ?? 'assets/default_user.png',
+                  'price': tokenPrice,
+                  'priceChange': 0.0,
+                  'usdValue': balance * tokenPrice,
+                });
+              }
+            } catch (e) {
+              debugPrint('[ReownProvider] Error parsing token account: $e');
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[ReownProvider] Error fetching SPL tokens: $e');
+      }
+
+      debugPrint('[ReownProvider] Found ${tokens.length} tokens');
+      return tokens;
+    } catch (e) {
+      debugPrint('[ReownProvider] Error fetching wallet tokens: $e');
+      return [];
+    }
+  }
+
+  // Helper method to make RPC calls
+  Future<Map<String, dynamic>?> _makeRpcCall(
+      String rpcUrl, String method, List params) async {
+    try {
+      final response = await http.post(
+        Uri.parse(rpcUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'jsonrpc': '2.0',
+          'id': 1,
+          'method': method,
+          'params': params,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('[ReownProvider] RPC call error: $e');
+    }
+    return null;
+  }
+
+  // Helper method to get token metadata
+  Future<Map<String, dynamic>> _getTokenMetadata(
+      String rpcUrl, String mint) async {
+    try {
+      // Check for well-known tokens first
+      final knownToken = _getKnownTokenMetadata(mint);
+      if (knownToken != null) {
+        return knownToken;
+      }
+
+      // Try to get metadata from Jupiter API (popular token list)
+      final jupiterMetadata = await _getJupiterTokenMetadata(mint);
+      if (jupiterMetadata != null) {
+        return jupiterMetadata;
+      }
+
+      // Fallback: Try to get metadata from Solana metadata program
+      final metadataAccount = await _getMetadataAccount(rpcUrl, mint);
+      if (metadataAccount != null) {
+        return metadataAccount;
+      }
+
+      // Final fallback: Use mint address info
+      return {
+        'name': 'Token ${mint.substring(0, 8)}',
+        'symbol': mint.substring(0, 4).toUpperCase(),
+        'image': 'assets/default_user.png',
+      };
+    } catch (e) {
+      debugPrint('[ReownProvider] Error fetching token metadata: $e');
+      return {
+        'name': 'Unknown Token',
+        'symbol': mint.substring(0, 4).toUpperCase(),
+        'image': 'assets/default_user.png',
+      };
+    }
+  }
+
+  // Get metadata for well-known tokens
+  Map<String, dynamic>? _getKnownTokenMetadata(String mint) {
+    final knownTokens = {
+      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': {
+        'name': 'USD Coin',
+        'symbol': 'USDC',
+        'image':
+            'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+      },
+      'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': {
+        'name': 'Tether USD',
+        'symbol': 'USDT',
+        'image':
+            'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.svg',
+      },
+      'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So': {
+        'name': 'Marinade staked SOL',
+        'symbol': 'mSOL',
+        'image':
+            'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png',
+      },
+      'So11111111111111111111111111111111111111112': {
+        'name': 'Wrapped SOL',
+        'symbol': 'SOL',
+        'image':
+            'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
+      },
+    };
+
+    return knownTokens[mint];
+  }
+
+  // Get token metadata from Jupiter API (most comprehensive token list)
+  Future<Map<String, dynamic>?> _getJupiterTokenMetadata(String mint) async {
+    try {
+      // Check cache first
+      if (_tokenMetadataCache.containsKey(mint)) {
+        return _tokenMetadataCache[mint];
+      }
+
+      // Load Jupiter token list if not already loaded
+      if (_jupiterTokenList == null) {
+        final response = await http.get(
+          Uri.parse('https://token.jup.ag/strict'),
+          headers: {'Accept': 'application/json'},
+        );
+
+        if (response.statusCode == 200) {
+          _jupiterTokenList = jsonDecode(response.body) as List;
+        } else {
+          return null;
+        }
+      }
+
+      // Find token in the list
+      final tokenInfo = _jupiterTokenList!.firstWhere(
+        (token) => token['address'] == mint,
+        orElse: () => null,
+      );
+
+      if (tokenInfo != null) {
+        final metadata = {
+          'name': tokenInfo['name'] ?? 'Unknown Token',
+          'symbol': tokenInfo['symbol'] ?? mint.substring(0, 4).toUpperCase(),
+          'image': tokenInfo['logoURI'] ?? 'assets/default_user.png',
+        };
+
+        // Cache the result
+        _tokenMetadataCache[mint] = metadata;
+        return metadata;
+      }
+    } catch (e) {
+      debugPrint('[ReownProvider] Error fetching Jupiter metadata: $e');
+    }
+    return null;
+  }
+
+  // Get metadata from Solana metadata program
+  Future<Map<String, dynamic>?> _getMetadataAccount(
+      String rpcUrl, String mint) async {
+    try {
+      // Calculate metadata PDA
+      final metadataProgramId = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s';
+
+      // For now, we'll use a simplified approach
+      // In a full implementation, you'd need to derive the PDA properly
+
+      return null; // Will implement if Jupiter API doesn't work
+    } catch (e) {
+      debugPrint('[ReownProvider] Error fetching metadata account: $e');
+      return null;
+    }
+  }
+
+  // Helper method to format token names
+  String _formatTokenName(String name) {
+    if (name.length <= 20) return name;
+    return '${name.substring(0, 17)}...';
+  }
+
+  // Helper method to format token symbols
+  String _formatTokenSymbol(String symbol) {
+    if (symbol.length <= 8) return symbol.toUpperCase();
+    return symbol.substring(0, 8).toUpperCase();
+  }
+
+  // Get token price from CoinGecko API
+  Future<double> _getTokenPrice(String tokenId) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'https://api.coingecko.com/api/v3/simple/price?ids=$tokenId&vs_currencies=usd'),
+        headers: {'Accept': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        return (data[tokenId]?['usd'] as num?)?.toDouble() ?? 0.0;
+      }
+    } catch (e) {
+      debugPrint('[ReownProvider] Error fetching token price: $e');
+    }
+    return 0.0;
+  }
+
+  // Calculate total portfolio value in USD
+  Future<double> calculateTotalPortfolioValue() async {
+    try {
+      final tokens = await fetchWalletTokens();
+      double totalValue = 0.0;
+
+      for (final token in tokens) {
+        final usdValue = token['usdValue'] as double? ?? 0.0;
+        totalValue += usdValue;
+      }
+
+      return totalValue;
+    } catch (e) {
+      debugPrint('[ReownProvider] Error calculating portfolio value: $e');
+      return 0.0;
+    }
+  }
+
   void _onModalUpdate(ModalConnect? event) {
     debugPrint('[CreateToken] _onModalUpdate ${event?.session.toJson()}');
     notifyListeners();
@@ -588,17 +938,6 @@ class ReownProvider extends ChangeNotifier {
   Future<void> connectWallet(BuildContext context) async {
     setIsLoading(true);
 
-    if (tokenNameController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a token name'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      setIsLoading(false);
-      return;
-    }
-
     if (appKitModal == null) {
       // initializeService(context);
       toastification.show(
@@ -613,18 +952,20 @@ class ReownProvider extends ChangeNotifier {
     }
 
     if (appKitModal!.session == null) {
-      toastification.show(
-        type: ToastificationType.error,
-        title: const Text('Please connect your wallet first'),
-        context: context,
-        autoCloseDuration: Duration(seconds: 2),
-        alignment: Alignment.bottomCenter,
-      );
+      // toastification.show(
+      //   type: ToastificationType.error,
+      //   title: const Text('Please connect your wallet first'),
+      //   context: context,
+      //   autoCloseDuration: Duration(seconds: 2),
+      //   alignment: Alignment.bottomCenter,
+      // );
 
       appKitModal!
           .openModalView(const ReownAppKitModalAllWalletsPage())
           .then((value) {
-        createToken(context);
+        Toast.show('Wallet connected successfully!');
+        setIsLoading(false);
+        // createToken(context);
       }).onError((error, stackTrace) {
         setIsLoading(false);
         print('❌ Error in connectWallet: $error');
@@ -636,6 +977,17 @@ class ReownProvider extends ChangeNotifier {
 
   Future<void> createToken(BuildContext context) async {
     try {
+      if (tokenNameController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a token name'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setIsLoading(false);
+        return;
+      }
+
       if (!isWalletConnected ||
           appKitModal?.session == null ||
           appKitModal?.selectedChain == null) {
@@ -744,14 +1096,14 @@ class ReownProvider extends ChangeNotifier {
             request: params,
           );
 
-          MethodDialog.show(context, "Creating SPL Token", future)
-              .then((value) {
-            Toast.show('Token created successfully!');
-            NavigationService.navigateOffAll(
-              context,
-              RouteConstants.mainScreen,
-            );
-          });
+          // MethodDialog.show(context, "Creating SPL Token", future)
+          //     .then((value) {
+          Toast.show('Token created successfully!');
+          NavigationService.navigateOffAll(
+            context,
+            RouteConstants.mainScreen,
+          );
+          // });
 
           // // Wait for the transaction to complete before showing success message
           // await future;

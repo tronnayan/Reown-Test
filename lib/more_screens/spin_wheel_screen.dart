@@ -79,10 +79,11 @@ class _SpinWheelScreenState extends State<SpinWheelScreen>
       body: SafeArea(
         child: Column(
           children: [
+            // Stats Section
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: ColorConstants.secondaryBackground,
                   borderRadius: BorderRadius.circular(16),
@@ -98,9 +99,9 @@ class _SpinWheelScreenState extends State<SpinWheelScreen>
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     _buildStatRow('Total No. of Spins', '06'),
-                    _buildStatRow('Tokens wonfrom Spin', '08',
+                    _buildStatRow('Tokens won from Spin', '08',
                         color: ColorConstants.primaryPurple),
                     _buildStatRow('No. of Spins Left', '01',
                         color: Color(0xFF6750A4)),
@@ -109,77 +110,87 @@ class _SpinWheelScreenState extends State<SpinWheelScreen>
               ),
             ),
 
-            // Spin Wheel
+            // Spin Wheel Section
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
                 child: Container(
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     color: ColorConstants.secondaryBackground,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        height: 300,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Transform.rotate(
-                              angle: _currentRotation,
-                              child: CustomPaint(
-                                size: const Size(280, 280),
-                                painter: WheelPainter(segments: segments),
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 20),
+                          // Spin Wheel
+                          SizedBox(
+                            height: 280,
+                            width: 280,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Transform.rotate(
+                                  angle: _currentRotation,
+                                  child: CustomPaint(
+                                    size: const Size(280, 280),
+                                    painter: WheelPainter(segments: segments),
+                                  ),
+                                ),
+                                Container(
+                                  width: 30,
+                                  height: 30,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+                          ElevatedButton(
+                            onPressed: _spinWheel,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ColorConstants.primaryPurple,
+                              minimumSize: const Size(200, 48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(100),
                               ),
                             ),
-                            Container(
-                              width: 30,
-                              height: 30,
-                              decoration: const BoxDecoration(
+                            child: const Text(
+                              'Click here to Spin',
+                              style: TextStyle(
                                 color: Colors.white,
-                                shape: BoxShape.circle,
+                                fontSize: 16,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _spinWheel,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorConstants.primaryPurple,
-                          minimumSize: const Size(200, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(100),
                           ),
-                        ),
-                        child: const Text(
-                          'Click here to Spin',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
+                          const SizedBox(height: 20),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 24.0),
+                            child: Text(
+                              'Free Tokens will be instantly credited to your wallet account when you win. You can only spin 5 times a day. So you can come back and try your luck !',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 13,
+                                height: 1.4,
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 20),
+                        ],
                       ),
-                      const SizedBox(height: 24),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 32.0),
-                        child: Text(
-                          'Free Tokens will be instantly credited to your wallet account when you win. You can only spin 5 times a day. So you can come back and try your luck !',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -188,22 +199,24 @@ class _SpinWheelScreenState extends State<SpinWheelScreen>
 
   Widget _buildStatRow(String label, String value, {Color? color}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 16,
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 15,
+              ),
             ),
           ),
           Text(
             value,
             style: TextStyle(
               color: color ?? Colors.white,
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w500,
             ),
           ),

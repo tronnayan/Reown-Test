@@ -36,28 +36,30 @@ class MainScreen extends StatelessWidget {
                 ],
               ),
             ),
-            bottomNavigationBar: Container(
-              height: 80,
-              decoration: BoxDecoration(
-                color: ColorConstants.darkBackground,
-                border: Border(
-                  top: BorderSide(
-                    color: Colors.white.withOpacity(0.1),
+            bottomNavigationBar: SafeArea(
+              child: Container(
+                height: 70,
+                decoration: BoxDecoration(
+                  color: ColorConstants.darkBackground,
+                  border: Border(
+                    top: BorderSide(
+                      color: Colors.white.withOpacity(0.1),
+                    ),
                   ),
                 ),
-              ),
-              child: Theme(
-                data: Theme.of(context).copyWith(
-                  canvasColor: ColorConstants.darkBackground,
-                ),
-                child: BottomNavigationBar(
-                  currentIndex: mainProvider.selectedIndex,
-                  onTap: (index) => mainProvider.setIndex(index),
-                  backgroundColor: ColorConstants.darkBackground,
-                  selectedItemColor: ColorConstants.primaryPurple,
-                  unselectedItemColor: Colors.white.withOpacity(0.5),
-                  type: BottomNavigationBarType.fixed,
-                  items: [
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    canvasColor: ColorConstants.darkBackground,
+                  ),
+                  child: BottomNavigationBar(
+                    currentIndex: mainProvider.selectedIndex,
+                    onTap: (index) => mainProvider.setIndex(index),
+                    backgroundColor: ColorConstants.darkBackground,
+                    selectedItemColor: ColorConstants.primaryPurple,
+                    unselectedItemColor: Colors.white.withOpacity(0.5),
+                    type: BottomNavigationBarType.fixed,
+                    elevation: 0,
+                    items: [
                     BottomNavigationBarItem(
                       icon: Image.asset(
                         'assets/icons/home_icon.png',
@@ -109,6 +111,7 @@ class MainScreen extends StatelessWidget {
                       label: 'More',
                     ),
                   ],
+                  ),
                 ),
               ),
             ),

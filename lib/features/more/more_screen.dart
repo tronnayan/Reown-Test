@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:peopleapp_flutter/features/auth/providers/authentication_provider.dart';
+import 'package:peopleapp_flutter/features/auth/providers/reown_provider.dart';
 import 'package:peopleapp_flutter/features/auth/screens/login_screen.dart';
 import 'package:peopleapp_flutter/features/auth/screens/splash_screen.dart';
 import 'package:peopleapp_flutter/more_screens/bookmarks_screen.dart';
@@ -184,6 +185,7 @@ class _MoreScreenState extends State<MoreScreen> {
             ),
             TextButton(
               onPressed: () {
+                context.read<ReownProvider>().appKit;
                 context.read<AuthenticationProvider>().logout(context: context);
               },
               child: const Text(
