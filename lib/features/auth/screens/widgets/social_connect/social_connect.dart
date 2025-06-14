@@ -131,7 +131,11 @@ class _SocialConnectionsSheetState extends State<SocialConnectionsSheet> {
             text: 'Done',
             isDisabled: (isCompleted == false),
             onPressed: () {
-              widget.onDone();
+              if (isCompleted) {
+                widget.onDone();
+              } else {
+                Toast.show('Please connect all social accounts');
+              }
             },
           ),
           const SizedBox(height: 24),
@@ -171,16 +175,14 @@ class _SocialConnectionsSheetState extends State<SocialConnectionsSheet> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                // Logic to proceed to create token
-                // For example, navigate to the CreateTokenScreen
-                Navigator.pushNamed(context, RouteConstants.createTokenScreen);
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
               },
               child: const Text('Continue'),
             ),

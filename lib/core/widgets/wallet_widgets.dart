@@ -68,7 +68,7 @@ class WalletBalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return isWalletConnected
+    return !isWalletConnected
         ? Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(24),
@@ -220,13 +220,13 @@ class WalletBalanceCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    Text(
-                      '=63.00905',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 16,
-                      ),
-                    ),
+                    // Text(
+                    //   '=63.00905',
+                    //   style: TextStyle(
+                    //     color: Colors.white.withOpacity(0.7),
+                    //     fontSize: 16,
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
@@ -383,7 +383,7 @@ class SocialNetworthCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     const Text(
-                      'Social Networth',
+                      'Portfolio Value',
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 14,
@@ -392,13 +392,19 @@ class SocialNetworthCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '\$${00.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                FutureBuilder<double>(
+                  future: reownProvider.calculateTotalPortfolioValue(),
+                  builder: (context, snapshot) {
+                    final totalValue = snapshot.data ?? 0.0;
+                    return Text(
+                      '\$${totalValue.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
                 ),
                 Row(
                   children: [
@@ -448,13 +454,39 @@ class AssetsTabView extends StatelessWidget {
   final TabController tabController;
   final List<Token> tokens;
   final List<NFT> nfts;
+  final bool isLoadingTokens;
+  final VoidCallback? onRefresh;
 
   const AssetsTabView({
     Key? key,
     required this.tabController,
     required this.tokens,
     required this.nfts,
+    this.isLoadingTokens = false,
+    this.onRefresh,
   }) : super(key: key);
+
+  // Helper method to format large numbers
+  String _formatBalance(double balance) {
+    if (balance == 0) return '0';
+    
+    if (balance >= 1000000000) {
+      // Billions
+      return '${(balance / 1000000000).toStringAsFixed(2)}B';
+    } else if (balance >= 1000000) {
+      // Millions
+      return '${(balance / 1000000).toStringAsFixed(2)}M';
+    } else if (balance >= 1000) {
+      // Thousands
+      return '${(balance / 1000).toStringAsFixed(2)}K';
+    } else if (balance >= 1) {
+      // Regular numbers
+      return balance.toStringAsFixed(4);
+    } else {
+      // Very small numbers
+      return balance.toStringAsFixed(8);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -517,127 +549,279 @@ class AssetsTabView extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
-            children: const [
-              Text(
-                '\$token Name',
+            children: [
+              const Text(
+                'Token Name',
                 style: TextStyle(
                   color: Color(0X60FFFFFF),
                   fontSize: 12,
                 ),
               ),
-              Spacer(),
-              Text(
-                'Price',
+              const Spacer(),
+              const Text(
+                'Balance',
                 style: TextStyle(
                   color: Color(0X60FFFFFF),
                   fontSize: 12,
                 ),
               ),
-              SizedBox(width: 60),
-              Text(
+              const SizedBox(width: 60),
+              const Text(
                 '24H change',
                 style: TextStyle(
                   color: Color(0X60FFFFFF),
                   fontSize: 12,
                 ),
               ),
+              if (onRefresh != null) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: onRefresh,
+                  child: const Icon(
+                    Icons.refresh,
+                    color: Color(0X60FFFFFF),
+                    size: 16,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            itemCount: tokens.length,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemBuilder: (context, index) {
-              final token = tokens[index];
-              return Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.white.withOpacity(0.05),
-                      width: 1,
-                    ),
+          child: isLoadingTokens
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    color: ColorConstants.primaryPurple,
                   ),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundImage: AssetImage(token.imageUrl),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
+                )
+              : tokens.isEmpty
+                  ? const Center(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          Icon(
+                            Icons.account_balance_wallet_outlined,
+                            size: 48,
+                            color: Colors.white54,
+                          ),
+                          SizedBox(height: 16),
                           Text(
-                            token.name,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            'No tokens found',
+                            style: TextStyle(
+                              color: Colors.white54,
                               fontSize: 16,
-                              fontWeight: FontWeight.w500,
                             ),
                           ),
+                          SizedBox(height: 8),
                           Text(
-                            '\$${token.symbol.toLowerCase()}',
-                            style: const TextStyle(
-                              color: Color(0xFF666666),
+                            'Connect your wallet to view tokens',
+                            style: TextStyle(
+                              color: Colors.white38,
                               fontSize: 14,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          token.price.toStringAsFixed(2),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                    )
+                  : ListView.builder(
+                      itemCount: tokens.length,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemBuilder: (context, index) {
+                        final token = tokens[index];
+                        return Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: Colors.white.withOpacity(0.05),
+                                width: 1,
+                              ),
+                            ),
                           ),
-                        ),
-                        Text(
-                          '${token.price.toStringAsFixed(2)} USD',
-                          style: const TextStyle(
-                            color: Color(0xFF666666),
-                            fontSize: 14,
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: Colors.grey[800],
+                                child: token.imageUrl.startsWith('http')
+                                    ? ClipOval(
+                                        child: Image.network(
+                                          token.imageUrl,
+                                          width: 40,
+                                          height: 40,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              width: 40,
+                                              height: 40,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[800],
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  token.symbol.isNotEmpty 
+                                                      ? token.symbol.substring(0, 1).toUpperCase()
+                                                      : '?',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Container(
+                                              width: 40,
+                                              height: 40,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[800],
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Center(
+                                                child: SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    color: Colors.white54,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      )
+                                    : token.imageUrl.startsWith('assets')
+                                        ? ClipOval(
+                                            child: Image.asset(
+                                              token.imageUrl,
+                                              width: 40,
+                                              height: 40,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                return Text(
+                                                  token.symbol.isNotEmpty 
+                                                      ? token.symbol.substring(0, 1).toUpperCase()
+                                                      : '?',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          )
+                                        : Text(
+                                            token.symbol.isNotEmpty 
+                                                ? token.symbol.substring(0, 1).toUpperCase()
+                                                : '?',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 3,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      token.name,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      token.symbol,
+                                      style: const TextStyle(
+                                        color: Color(0xFF666666),
+                                        fontSize: 13,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 2,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      _formatBalance(token.price),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      token.symbol,
+                                      style: const TextStyle(
+                                        color: Color(0xFF666666),
+                                        fontSize: 12,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                width: 60,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Icon(
+                                      token.priceChange > 0
+                                          ? Icons.arrow_drop_up
+                                          : Icons.arrow_drop_down,
+                                      color: token.priceChange > 0
+                                          ? const Color(0xFF4CAF50)
+                                          : const Color(0xFFE53935),
+                                      size: 16,
+                                    ),
+                                    Flexible(
+                                      child: Text(
+                                        '${token.priceChange.abs().toStringAsFixed(1)}%',
+                                        style: TextStyle(
+                                          color: token.priceChange > 0
+                                              ? const Color(0xFF4CAF50)
+                                              : const Color(0xFFE53935),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                    const SizedBox(width: 40),
-                    Row(
-                      children: [
-                        Icon(
-                          token.priceChange > 0
-                              ? Icons.arrow_drop_up
-                              : Icons.arrow_drop_down,
-                          color: token.priceChange > 0
-                              ? const Color(0xFF4CAF50)
-                              : const Color(0xFFE53935),
-                          size: 16,
-                        ),
-                        Text(
-                          '${token.priceChange.abs().toStringAsFixed(2)}%',
-                          style: TextStyle(
-                            color: token.priceChange > 0
-                                ? const Color(0xFF4CAF50)
-                                : const Color(0xFFE53935),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
         ),
       ],
     );

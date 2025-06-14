@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:peopleapp_flutter/core/constants/color_constants.dart';
 import 'package:peopleapp_flutter/core/utlites/wallet_formatter.dart';
 import 'package:peopleapp_flutter/features/dashboard/provider/dashboard_provider.dart';
+import 'package:peopleapp_flutter/features/main/provider/main_provider.dart';
 import 'package:provider/provider.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -285,21 +286,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Image.asset('assets/images/people_logo.png', height: 24),
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: ColorConstants.primaryPurple.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  WalletFormatter.shortenAddress(
-                      dashboardProvider.walletData?.walletAddress ?? ''),
-                  style: const TextStyle(color: Colors.white),
-                ),
-                const Icon(Icons.keyboard_arrow_down, color: Colors.white),
-              ],
+          GestureDetector(
+            onTap: () {
+              context.read<MainProvider>().setIndex(2);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: ColorConstants.primaryPurple.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    WalletFormatter.shortenAddress(
+                        dashboardProvider.walletData?.walletAddress ?? ''),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                ],
+              ),
             ),
           ),
         ],

@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBb8pAM0XDV-lVSXiWW8vrbrkCToi1UfQU',
-    appId: '1:224874451784:android:6e068b50b5285b1802997d',
+    appId: '1:224874451784:android:8d3e91af3f42ed6102997d',
     messagingSenderId: '224874451784',
     projectId: 'peopleapp-3a8ae',
     storageBucket: 'peopleapp-3a8ae.firebasestorage.app',
@@ -59,12 +59,13 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyD1bsjSMO70ITAhxozFIRDSREf9ol4WOLo',
-    appId: '1:224874451784:ios:1bc1c0a1441350ea02997d',
+    appId: '1:224874451784:ios:6a8805f4215cc52302997d',
     messagingSenderId: '224874451784',
     projectId: 'peopleapp-3a8ae',
     storageBucket: 'peopleapp-3a8ae.firebasestorage.app',
     androidClientId: '224874451784-322qr7ruqg8n7b7v7va6uagi0e3huprr.apps.googleusercontent.com',
-    iosClientId: '224874451784-slsi4m5ma56o2frlqgfb928s38ia8983.apps.googleusercontent.com',
+    iosClientId: '224874451784-uqi5c4s0u1t5qsf34icmc8fh65rt2btv.apps.googleusercontent.com',
     iosBundleId: 'com.peopleapp.ios',
   );
+
 }

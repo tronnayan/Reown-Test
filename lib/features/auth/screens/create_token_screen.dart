@@ -25,15 +25,14 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // await context.read<ReownProvider>().initializeService(context);
+      AuthBottomSheets.showSocialConnectionsBottomSheet(context, onDone: () {
+        Navigator.pop(context);
+      });
       final reownProvider = context.read<ReownProvider>();
 
       // If we haven’t already, initialize with THIS context so overlays work
 
       await reownProvider.initializeService(context);
-
-      AuthBottomSheets.showSocialConnectionsBottomSheet(context, onDone: () {
-        Navigator.pop(context);
-      });
     });
   }
 
@@ -91,45 +90,47 @@ class _CreateTokenScreenState extends State<CreateTokenScreen> {
                       backgroundImage: AssetImage('assets/default_user.png'),
                     ),
                     const SizedBox(height: 36),
-                    Center(
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 96),
-                        child: TextField(
-                          controller: provider.tokenNameController,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: ColorConstants.secondaryBackground,
-                            hintText: '\$people',
-                            hintStyle: const TextStyle(
-                              color: ColorConstants.greyText,
+
+                    if (provider.isWalletConnected)
+                      Center(
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 96),
+                          child: TextField(
+                            controller: provider.tokenNameController,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
                               fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                             ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide.none,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: ColorConstants.secondaryBackground,
+                              hintText: '\$people',
+                              hintStyle: const TextStyle(
+                                color: ColorConstants.greyText,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 16),
                             ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 16),
                           ),
                         ),
                       ),
-                    ),
 
                     // Display wallet details when connected
                     if (provider.isWalletConnected) ...[
